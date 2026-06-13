@@ -22,10 +22,15 @@ export function kanban_commands(program: Command): void {
   cmd
     .command("init <path>")
     .description("创建看板 (格式: project/kanban)")
-    .action(async (path_str) => {
+    .option("--bp", "使用最佳实践模板（创建 idea/todo/doing/done 列 + hooks）")
+    .action(async (path_str, options) => {
       const { head: project_name, tail: rest } = split_first(path_str);
-      await kanban_init(path.join(root(), project_name), rest);
-      console.log("kanban: " + rest + " in " + project_name);
+      await kanban_init(path.join(root(), project_name), rest, options.bp ? "bp" : undefined);
+      if (options.bp) {
+        console.log("kanban (bp): " + rest + " in " + project_name);
+      } else {
+        console.log("kanban: " + rest + " in " + project_name);
+      }
     });
 
   cmd
