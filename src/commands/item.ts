@@ -35,8 +35,11 @@ export function item_commands(program: Command): void {
     .action(async (item_path_str) => {
       const detail = await item_show(path.join(root(), item_path_str));
       if (detail === null) return console.log("item not found");
+      const rootDir = root();
+      const relPath = path.relative(rootDir, path.join(rootDir, item_path_str));
       console.log("name: " + (detail.metadata.name || "(untitled)"));
       if (detail.metadata.desc) console.log("desc: " + detail.metadata.desc);
+      console.log("path: " + relPath);
       console.log("---");
       if (detail.checkboxes.length > 0) {
         detail.checkboxes.forEach((t) => {
@@ -75,20 +78,22 @@ export function item_commands(program: Command): void {
       console.log("trashed: " + result);
     });
 
-  cmd
-    .command("purge <item_path>")
-    .description("永久删除（慎用）")
-    .action(async (item_path_str) => {
-      await permanent_delete(path.join(root(), item_path_str));
-      console.log("purged");
-    });
+  const trash = cmd.command("trash").description("回收站管理");
 
-  cmd
-    .command("trash-ls <kanban_path>")
+  trash
+    .command("ls <kanban_path>")
     .description("列出回收站内容 (path = project/kanban)")
     .action(async (kanban_path_str) => {
       const items = await list_trash(path.join(root(), kanban_path_str));
       if (items.length === 0) return console.log("(empty)");
       items.forEach((p) => console.log(p));
+    });
+
+  trash
+    .command("purge <item_path>")
+    .description("永久删除回收站内的卡片")
+    .action(async (item_path_str) => {
+      await permanent_delete(path.join(root(), item_path_str));
+      console.log("purged");
     });
 }

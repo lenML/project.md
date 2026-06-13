@@ -23,7 +23,7 @@ export function checkbox_commands(program: Command): void {
 
   cmd
     .command("toggle <item_path> <hash...>")
-    .description("切换 checkbox 完成状态")
+    .description("切换 checkbox 完成状态（支持多 hash: toggle path hash1 hash2 hash3）")
     .action(async (item_path_str, hashes) => {
       await checkbox_toggle(path.join(root(), item_path_str), ...hashes);
       console.log("toggled");

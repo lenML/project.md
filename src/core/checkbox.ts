@@ -52,6 +52,6 @@ export async function checkbox_toggle(
   const proj_dir = get_project_dir(item_path);
   await log_event(proj_dir, "checkbox_toggle", "切换 checkbox: " + hashes.join(", "), undefined, make_paths_relative(proj_dir, {
     item_path,
-    hashes: hashes.map((h: string) => h),
+    hashes,
   }));
 }
