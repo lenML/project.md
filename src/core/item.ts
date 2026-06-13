@@ -39,7 +39,7 @@ export async function item_new(
 ): Promise<ItemSummary> {
   const now = new Date().toISOString();
  const id = short_hash(name + now);
-  const safe_name = Array.from(name).map(ch => ch < ' ' ? '_' : ch).join('').replace(/[<>:"/\\|?*]/g, "_");
+  const safe_name = Array.from(name).map(ch => ch < ' ' ? '_' : ch).join('').replace(/[\s<>:"/\\|?*]/g, "_");
   const file_path = path.join(column_dir, `${safe_name}.md`);
 
   const kanban_dir = path.dirname(column_dir);

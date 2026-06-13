@@ -7,7 +7,7 @@ import os from "node:os";
 const DEFAULT_ROOT_NAME = ".project.md";
 
 export function get_default_root(): string {
-  return path.join(os.homedir(), DEFAULT_ROOT_NAME);
+  return process.env.PMD_DIR || path.join(os.homedir(), DEFAULT_ROOT_NAME);
 }
 
 export async function ensure_dir(dir_path: string): Promise<string> {

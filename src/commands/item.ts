@@ -30,6 +30,15 @@ export function item_commands(program: Command): void {
     });
 
   cmd
+    .command("add <path> <name>")
+    .description("创建卡片 (new 的别名)")
+    .option("-d, --desc <desc>", "描述")
+    .action(async (path_str, name, options) => {
+      const item = await item_new(path.join(root(), path_str), name, options.desc);
+      console.log("created: " + item.id + " " + item.file_path);
+    });
+
+  cmd
     .command("show <item_path>")
     .description("显示卡片详情")
     .action(async (item_path_str) => {

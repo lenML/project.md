@@ -47,7 +47,9 @@ export function kanban_commands(program: Command): void {
         const cards = items.map((i) => "  " + i.id + "  " + i.name).join("\n");
         console.log(col + " (" + items.length + "):");
         if (items.length > 0) console.log(cards);
+        console.log("");
       }
+      console.log("提示: 使用 pdm checkbox --help 管理子任务");
     });
 
   cmd
