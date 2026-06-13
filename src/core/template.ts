@@ -3,6 +3,8 @@ import { ensure_dir, write_file } from "../utils/fs.js";
 import { column_init } from "./column.js";
 
 const BEST_PRACTICE_HOOKS = `
+import { readFileSync } from "node:fs";
+
 // project.md kanban hooks - 最佳实践模板
 // 可导出以下函数：before_item_move, after_item_move, before_item_create,
 //   after_item_create, after_item_delete, after_item_delete,
@@ -13,10 +15,21 @@ const BEST_PRACTICE_HOOKS = `
 
 /**
  * 卡片移动到目标列之前。
- * dest_column 为目标列名（idea/todo/doing/done）。
- * 内置 done 列会自动校验 checkbox 是否全部完成。
+ * 移动到 done 时自动校验所有 checkbox 是否勾选。
  */
 export function before_item_move(ctx) {
+  if (ctx.dest_column === "done" && ctx.item_path) {
+    try {
+      const content = readFileSync(ctx.item_path, "utf-8");
+      const unchecked = content
+        .split("\\n")
+        .filter((l) => /^\\s*-\\s+\\[\\s\\]/.test(l))
+        .map((l) => l.trim());
+      if (unchecked.length > 0) {
+        return { ok: false, message: unchecked.length + " 个 checkbox 未完成: " + unchecked.join(", ") };
+      }
+    } catch { /* 文件读取失败则放行 */ }
+  }
   return { ok: true };
 }
 
