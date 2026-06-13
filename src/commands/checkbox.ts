@@ -17,7 +17,8 @@ export function checkbox_commands(program: Command): void {
       if (items.length === 0) return console.log("(empty)");
       items.forEach((t) => {
         const mark = t.checked ? "[x]" : "[ ]";
-        console.log("  " + mark + " " + t.text + "  #" + t.hash);
+        const indent = "  ".repeat(t.depth);
+        console.log(indent + mark + " " + t.text + "  #" + t.hash);
       });
     });
 

@@ -53,7 +53,8 @@ export function item_commands(program: Command): void {
       if (detail.checkboxes.length > 0) {
         detail.checkboxes.forEach((t) => {
           const mark = t.checked ? "[x]" : "[ ]";
-          console.log("  " + mark + " " + t.text + "  #" + t.hash);
+          const indent = "  ".repeat(t.depth);
+          console.log(indent + mark + " " + t.text + "  #" + t.hash);
         });
       }
       if (detail.body.trim()) {

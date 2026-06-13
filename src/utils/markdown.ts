@@ -2,7 +2,6 @@ import yaml from "js-yaml";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
-import { visit } from "unist-util-visit";
 import type { ListItem, Paragraph, Text } from "mdast";
 import { short_hash } from "./hash.js";
 
@@ -41,6 +40,7 @@ export interface CheckboxItem {
   checked: boolean;
   hash: string;
   bracket_offset: number;
+  depth: number;
 }
 
 function get_item_text(node: ListItem): string {
@@ -56,42 +56,82 @@ function get_item_text(node: ListItem): string {
 
 const CHECKBOX_MARKER = /\[( |x|X)\]/;
 
-export function parse_checkbox_lines(content: string): CheckboxItem[] {
-  const mdast = unified().use(remarkParse).use(remarkGfm).parse(content);
+function collect_checkboxes(
+  node: import("mdast").Content | import("mdast").Root,
+  content: string,
+  depth = 0,
+): CheckboxItem[] {
+  if (node.type !== "list" && node.type !== "root") return [];
+
   const results: CheckboxItem[] = [];
+  for (const child of node.children || []) {
+    // handle nested lists (e.g. list at root level)
+    if (child.type === "list") {
+      results.push(...collect_checkboxes(child, content, depth));
+      continue;
+    }
+    if (child.type !== "listItem") continue;
+    const listItem = child as ListItem;
+    if (listItem.checked === null || listItem.checked === undefined) continue;
 
-  visit(mdast, "listItem", (node: ListItem) => {
-    if (node.checked === null || node.checked === undefined) return;
-
-    const text = get_item_text(node);
-    const pos = node.position!;
+    const text = get_item_text(listItem);
+    const pos = listItem.position!;
     const start = pos.start.offset!;
     const end = pos.end.offset!;
     const slice = content.slice(start, end);
     const m = slice.match(CHECKBOX_MARKER);
-    if (!m) return;
+    if (!m) continue;
 
     results.push({
       text,
-      checked: node.checked!,
-      hash: short_hash(text),
+      checked: listItem.checked!,
+      hash: short_hash(text + "|depth:" + depth),
       bracket_offset: start + m.index!,
+      depth,
     });
-  });
+
+    // recursively collect nested checkboxes
+    for (const itemChild of listItem.children || []) {
+      if (itemChild.type === "list") {
+        results.push(...collect_checkboxes(itemChild, content, depth + 1));
+      }
+    }
+  }
 
   return results;
 }
 
+export function parse_checkbox_lines(content: string): CheckboxItem[] {
+  const mdast = unified().use(remarkParse).use(remarkGfm).parse(content);
+  return collect_checkboxes(mdast, content, 0);
+}
+
 export function toggle_checkbox_by_hash(content: string, hash: string): string {
   const items = parse_checkbox_lines(content);
-  const target = items.find((t) => t.hash === hash);
-  if (!target) return content;
+  const targetIdx = items.findIndex((t) => t.hash === hash);
+  if (targetIdx === -1) return content;
 
+  const target = items[targetIdx];
   const off = target.bracket_offset;
-  const before = content.slice(0, off);
   const bracket = content.slice(off, off + 3);
-  const after = content.slice(off + 3);
+  const newState = bracket.toLowerCase() === "[x]" ? "[ ]" : "[x]";
 
-  const repl = bracket.toLowerCase() === "[x]" ? "[ ]" : "[x]";
-  return before + repl + after;
+  // collect children (items with higher depth until same/lower depth)
+  const children: CheckboxItem[] = [];
+  for (let i = targetIdx + 1; i < items.length; i++) {
+    if (items[i].depth <= target.depth) break;
+    children.push(items[i]);
+  }
+
+  // replace from bottom to top to keep offsets correct
+  const all = [target, ...children].sort((a, b) => b.bracket_offset - a.bracket_offset);
+
+  let current = content;
+  for (const item of all) {
+    const before = current.slice(0, item.bracket_offset);
+    const after = current.slice(item.bracket_offset + 3);
+    current = before + newState + after;
+  }
+
+  return current;
 }
