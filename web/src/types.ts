@@ -1,0 +1,44 @@
+export interface CheckboxItem {
+  text: string;
+  checked: boolean;
+  hash: string;
+}
+
+export interface CardData {
+  name: string;
+  path: string;
+  meta: Record<string, unknown>;
+  body: string;
+  checkboxes: CheckboxItem[];
+}
+
+export interface ColumnData {
+  name: string;
+  cards: CardData[];
+}
+
+export interface KanbanData {
+  name: string;
+  columns: ColumnData[];
+}
+
+export interface ProjectData {
+  name: string;
+  kanbans: KanbanData[];
+}
+
+export interface EventRecord {
+  id: string;
+  timestamp: string;
+  type: string;
+  title: string;
+  content?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface ViewState {
+  project: string | null;
+  kanban: string | null;
+  showEvents: boolean;
+  card: CardData | null;
+}
