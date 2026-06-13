@@ -22,10 +22,10 @@ export function checkbox_commands(program: Command): void {
     });
 
   cmd
-    .command("toggle <item_path> <hash>")
+    .command("toggle <item_path> <hash...>")
     .description("切换 checkbox 完成状态")
-    .action(async (item_path_str, hash) => {
-      await checkbox_toggle(path.join(root(), item_path_str), hash);
+    .action(async (item_path_str, hashes) => {
+      await checkbox_toggle(path.join(root(), item_path_str), ...hashes);
       console.log("toggled");
     });
 }

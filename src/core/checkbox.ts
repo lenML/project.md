@@ -19,10 +19,16 @@ export async function checkbox_list(
   return parse_checkbox_lines(content);
 }
 
+/**
+ * 切换一个或多个 checkbox 状态。
+ * 多个 hash 只触发一次 before/after hook。
+ */
 export async function checkbox_toggle(
   item_path: string,
-  hash: string,
+  ...hashes: string[]
 ): Promise<void> {
+  if (hashes.length === 0) return;
+
   const kanban_dir = get_kanban_dir_from_item(item_path);
   const hook_ctx = { item_path };
   const hook_result = await run_before_hook(
@@ -34,11 +40,20 @@ export async function checkbox_toggle(
     throw new Error(hook_result.message || "hook 阻止 toggle");
   }
 
-  const content = await try_read_file(item_path);
+  let content = await try_read_file(item_path);
   if (content === null) return;
-  const updated = toggle_checkbox_by_hash(content, hash);
-  if (updated !== content) {
-    await writeFile(item_path, updated, "utf-8");
+
+  let changed = false;
+  for (const hash of hashes) {
+    const updated = toggle_checkbox_by_hash(content, hash);
+    if (updated !== content) {
+      content = updated;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await writeFile(item_path, content, "utf-8");
   }
 
   await run_after_hook(kanban_dir, "after_checkbox_toggle", hook_ctx);

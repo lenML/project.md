@@ -14,7 +14,7 @@ import {
   type HookContext,
 } from "../../src/core/hooks.js";
 import { item_new, item_remove } from "../../src/core/item.js";
-import { checkbox_toggle } from "../../src/core/checkbox.js";
+import { checkbox_list, checkbox_toggle } from "../../src/core/checkbox.js";
 import { try_read_file } from "../../src/utils/fs.js";
 
 let tmp_dir: string;
@@ -35,23 +35,11 @@ afterEach(async () => {
 });
 
 describe("load_hooks", () => {
-  /**
-   * No hooks dir
-   * Given a kanban without .hooks/ directory
-   * When load_hooks is called
-   * Then it returns an empty object
-   */
   it("returns empty for kanban without hooks", async () => {
     const hooks = await load_hooks(kanban_dir);
     expect(Object.keys(hooks)).toHaveLength(0);
   });
 
-  /**
-   * Load index.mjs
-   * Given a kanban with .hooks/index.mjs exporting hooks
-   * When load_hooks is called
-   * Then it returns the exported hooks
-   */
   it("loads hooks from index.mjs", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -66,12 +54,6 @@ describe("load_hooks", () => {
 });
 
 describe("run_before_hook", () => {
-  /**
-   * Run hook from index.mjs
-   * Given an index.mjs that exports before_item_move
-   * When run_before_hook is called
-   * Then the hook is invoked with context
-   */
   it("runs before_item_move from index.mjs", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -90,12 +72,6 @@ describe("run_before_hook", () => {
     expect(result!.message).toContain("done");
   });
 
-  /**
-   * Hook returns ok → null
-   * Given a hook that returns { ok: true }
-   * When run_before_hook is called
-   * Then it returns null (放行)
-   */
   it("returns null when hook allows", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -110,12 +86,6 @@ describe("run_before_hook", () => {
     expect(result).toBeNull();
   });
 
-  /**
-   * Column-level backward compat
-   * Given .hooks/todo.mjs with before_move
-   * When run_before_hook with hook_name=before_item_move and dest_column=todo
-   * Then the column-level hook is called
-   */
   it("falls back to column-level .mjs for before_item_move", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -132,12 +102,6 @@ describe("run_before_hook", () => {
     expect(result!.message).toContain("col hook");
   });
 
-  /**
-   * index.mjs takes priority over column-level
-   * Given both index.mjs and todo.mjs exist
-   * When run_before_hook is called
-   * Then index.mjs is used
-   */
   it("index.mjs takes priority over column-level hook", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -159,12 +123,6 @@ describe("run_before_hook", () => {
 });
 
 describe("hooks integrate with item ops", () => {
-  /**
-   * before_item_create blocks creation
-   * Given a hook that blocks item creation
-   * When item_new is called
-   * Then it throws
-   */
   it("before_item_create can block item_new", async () => {
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
@@ -173,17 +131,11 @@ describe("hooks integrate with item ops", () => {
       "export function before_item_create() { return { ok: false, message: \"no create allowed\" }; }\n",
       "utf-8",
     );
-    await expect(
-      item_new(col_todo, "blocked"),
-    ).rejects.toThrow("no create allowed");
+    await expect(item_new(col_todo, "blocked")).rejects.toThrow(
+      "no create allowed",
+    );
   });
 
-  /**
-   * before_item_delete blocks removal
-   * Given a hook that blocks item deletion
-   * When item_remove is called
-   * Then it throws
-   */
   it("before_item_delete can block item_remove", async () => {
     const item = await item_new(col_todo, "protected");
     const hooks_dir = path.join(kanban_dir, ".hooks");
@@ -196,16 +148,10 @@ describe("hooks integrate with item ops", () => {
     await expect(item_remove(item.file_path)).rejects.toThrow("no delete");
   });
 
-  /**
-   * before_checkbox_toggle blocks toggle
-   * Given a hook that blocks checkbox toggle
-   * When checkbox_toggle is called
-   * Then it throws
-   */
-  it("before_checkbox_toggle can block checkbox_toggle", async () => {
+  it("before_checkbox_toggle blocks toggle (single or multi)", async () => {
     const item = await item_new(col_todo, "locked");
     const content = (await try_read_file(item.file_path))!;
-    await writeFile(item.file_path, content + "- [ ] x\n", "utf-8");
+    await writeFile(item.file_path, content + "- [ ] x\n- [ ] y\n", "utf-8");
     const hooks_dir = path.join(kanban_dir, ".hooks");
     await mkdir(hooks_dir, { recursive: true });
     await writeFile(
@@ -213,8 +159,9 @@ describe("hooks integrate with item ops", () => {
       "export function before_checkbox_toggle() { return { ok: false, message: \"no toggle\" }; }\n",
       "utf-8",
     );
-    await expect(checkbox_toggle(item.file_path, "x")).rejects.toThrow(
-      "no toggle",
-    );
+    const items = await checkbox_list(item.file_path);
+    await expect(
+      checkbox_toggle(item.file_path, items[0].hash, items[1].hash),
+    ).rejects.toThrow("no toggle");
   });
 });

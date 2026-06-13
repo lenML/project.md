@@ -21,7 +21,11 @@ beforeEach(async () => {
   column_dir = await column_init(kanban_dir, "todo");
   const item = await item_new(column_dir, "任务");
   item_path = item.file_path;
-  await writeFile(item_path, (await try_read_file(item_path)) + "- [ ] first\n- [ ] second\n", "utf-8");
+  await writeFile(
+    item_path,
+    (await try_read_file(item_path)) + "- [ ] a\n- [ ] b\n- [ ] c\n",
+    "utf-8",
+  );
 });
 
 afterEach(async () => {
@@ -29,50 +33,43 @@ afterEach(async () => {
 });
 
 describe("checkbox_list", () => {
-  /**
-   * List checkboxes from item
-   * Given an item with two unchecked checkboxes
-   * When checkbox_list is called
-   * Then it returns both with unchecked status
-   */
-  it("lists all checkboxes in item", async () => {
+  it("lists all checkboxes", async () => {
     const items = await checkbox_list(item_path);
-    expect(items).toHaveLength(2);
-    expect(items[0].text).toBe("first");
-    expect(items[0].checked).toBe(false);
-    expect(items[1].text).toBe("second");
-    expect(items[1].checked).toBe(false);
+    expect(items).toHaveLength(3);
+    expect(items[0].text).toBe("a");
+    expect(items[1].text).toBe("b");
+    expect(items[2].text).toBe("c");
   });
 });
 
 describe("checkbox_toggle", () => {
-  /**
-   * Toggle unchecked to checked
-   * Given an unchecked checkbox "first"
-   * When checkbox_toggle is called with its hash
-   * Then it becomes checked in the file
-   */
-  it("toggles unchecked checkbox to checked", async () => {
+  it("toggles single hash", async () => {
     const before = await checkbox_list(item_path);
-    const hash = before[0].hash;
-    await checkbox_toggle(item_path, hash);
+    await checkbox_toggle(item_path, before[0].hash);
     const after = await checkbox_list(item_path);
     expect(after[0].checked).toBe(true);
     expect(after[1].checked).toBe(false);
+    expect(after[2].checked).toBe(false);
   });
 
   /**
-   * Toggle checked to unchecked
-   * Given a checked checkbox
-   * When checkbox_toggle is called again
-   * Then it becomes unchecked
+   * Toggle multiple hashes at once
+   * Given an item with checkboxes a b c
+   * When checkbox_toggle is called with hashes of a and c
+   * Then a and c become checked, b stays unchecked
    */
-  it("toggles checked checkbox to unchecked", async () => {
+  it("toggles multiple hashes at once", async () => {
     const before = await checkbox_list(item_path);
-    const hash = before[0].hash;
-    await checkbox_toggle(item_path, hash);
-    await checkbox_toggle(item_path, hash);
+    await checkbox_toggle(item_path, before[0].hash, before[2].hash);
     const after = await checkbox_list(item_path);
-    expect(after[0].checked).toBe(false);
+    expect(after[0].checked).toBe(true);
+    expect(after[1].checked).toBe(false);
+    expect(after[2].checked).toBe(true);
+  });
+
+  it("no-arg does nothing", async () => {
+    await checkbox_toggle(item_path);
+    const after = await checkbox_list(item_path);
+    expect(after.every((t) => !t.checked)).toBe(true);
   });
 });
