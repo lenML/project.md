@@ -41,46 +41,41 @@ export default function App() {
         </button>
         <button
           onClick={toggleWriteMode}
-          className={`text-sm ml-2 flex items-center gap-1 px-3 py-1 rounded-full transition-colors ${writeMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-100 border border-slate-700"}`}
+          className={"text-sm ml-2 flex items-center gap-1 px-3 py-1 rounded-full transition-colors " + (writeMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-100 border border-slate-700")}
           title={writeMode ? "关闭编辑模式" : "开启编辑模式"}
         >
           {writeMode ? <Unlock size={14} /> : <Lock size={14} />}
           {writeMode ? "编辑中" : "只读"}
         </button>
-        <button
-          onClick={() => useStore.getState().setView({ showEvents: !view.showEvents })}
-          className={`text-sm ml-auto px-3 py-1 rounded-full transition-colors ${view.showEvents ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-slate-100"}`}
-        >
-          事件
-        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar projects={projects} />
-        <main className="flex-1 overflow-auto p-4">
-          {error && (
-            <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>
-          )}
-          {loading && projects.length === 0 && (
-            <div className="flex items-center justify-center h-48 text-slate-500">
-              <Loader2 size={24} className="animate-spin mr-2" /> 加载中...
-            </div>
-          )}
-          {!loading && projects.length === 0 && !error && (
-            <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-              该目录下没有项目 (缺少 readme.md 的目录)
-            </div>
-          )}
-          {view.showEvents ? (
-            <EventLog />
-          ) : view.kanban ? (
-            <KanbanBoard />
-          ) : (
-            <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-              从左侧选择一个看板
-            </div>
-          )}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <main className="flex-1 overflow-auto p-4">
+            {error && (
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>
+            )}
+            {loading && projects.length === 0 && (
+              <div className="flex items-center justify-center h-48 text-slate-500">
+                <Loader2 size={24} className="animate-spin mr-2" /> 加载中...
+              </div>
+            )}
+            {!loading && projects.length === 0 && !error && (
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
+                该目录下没有项目 (缺少 readme.md 的目录)
+              </div>
+            )}
+            {view.kanban ? (
+              <KanbanBoard />
+            ) : (
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
+                从左侧选择一个看板
+              </div>
+            )}
+          </main>
+          {(view.kanban || view.project) && <EventLog />}
+        </div>
       </div>
 
       {view.card && <CardDetail />}

@@ -2,7 +2,6 @@ import { create } from "zustand";
 import {
   readDir, readTextFile, tryGetDir, tryGetFile,
   pickDirectory, writeTextFile, createFile, createDir, removeEntry,
-  listDirAll,
 } from "../utils/fs";
 import { parseFrontmatter, parseCheckboxes, buildFrontmatterDoc } from "../utils/markdown";
 import type { ProjectData, KanbanData, ColumnData, CardData, EventRecord, ViewState } from "../types";
@@ -40,14 +39,16 @@ async function loadProjectData(root: FileSystemDirectoryHandle): Promise<Project
     const kanbanEntries = await readDir(entry.handle as FileSystemDirectoryHandle);
     for (const k of kanbanEntries) {
       if (!k.isDir) continue;
+      if (k.name.startsWith(".")) continue;
       const columns: ColumnData[] = [];
       const colEntries = await readDir(k.handle as FileSystemDirectoryHandle);
       for (const c of colEntries) {
         if (!c.isDir) continue;
+        if (c.name.startsWith(".")) continue;
         const cards: CardData[] = [];
         const fileEntries = await readDir(c.handle as FileSystemDirectoryHandle);
         for (const f of fileEntries) {
-          if (f.isDir || !f.name.endsWith(".md")) continue;
+          if (f.isDir || !f.name.endsWith(".md") || f.name === "readme.md") continue;
           try {
             const content = await readTextFile(f.handle as FileSystemFileHandle);
             const parsed = parseFrontmatter(content);
@@ -91,6 +92,11 @@ interface AppStore {
   loading: boolean;
   writeMode: boolean;
   error: string | null;
+  searchQuery: string;
+  eventFilter: string;
+  eventPage: number;
+  EVENT_PAGE_SIZE: number;
+  CARD_PAGE_SIZE: number;
 
   selectDir: () => Promise<void>;
   loadAll: () => Promise<void>;
@@ -98,6 +104,10 @@ interface AppStore {
   setView: (v: Partial<ViewState>) => void;
   closeCard: () => void;
   toggleWriteMode: () => void;
+  setSearchQuery: (q: string) => void;
+  setEventFilter: (q: string) => void;
+  loadMoreEvents: () => void;
+  toggleLog: () => void;
 
   // write actions
   createCard: (proj: string, kanban: string, col: string, name: string, desc?: string) => Promise<void>;
@@ -113,15 +123,20 @@ export const useStore = create<AppStore>((set, get) => ({
   rootHandle: null,
   projects: [],
   events: [],
-  view: { project: null, kanban: null, showEvents: false, card: null },
+  view: { project: null, kanban: null, card: null, logOpen: false },
   loading: false,
   writeMode: false,
   error: null,
+  searchQuery: "",
+  eventFilter: "",
+  eventPage: 1,
+  EVENT_PAGE_SIZE: 50,
+  CARD_PAGE_SIZE: 50,
 
   selectDir: async () => {
     try {
       const handle = await pickDirectory(true);
-      set({ rootHandle: handle, rootDir: handle.name, error: null, view: { project: null, kanban: null, showEvents: false, card: null } });
+      set({ rootHandle: handle, rootDir: handle.name, error: null, view: { project: null, kanban: null, card: null, logOpen: false } });
       await get().loadAll();
     } catch (e: unknown) {
       if ((e as DOMException).name === "AbortError") return;
@@ -145,12 +160,16 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     const events = await loadEventsFromDir(rootHandle, projectName);
-    set({ events });
+    set({ events, eventPage: 1, eventFilter: "" });
   },
 
   setView: (v) => set((s) => ({ view: { ...s.view, ...v } })),
   closeCard: () => set((s) => ({ view: { ...s.view, card: null } })),
   toggleWriteMode: () => set((s) => ({ writeMode: !s.writeMode })),
+  setSearchQuery: (q: string) => set({ searchQuery: q }),
+  setEventFilter: (q: string) => set({ eventFilter: q, eventPage: 1 }),
+  loadMoreEvents: () => set((s) => ({ eventPage: s.eventPage + 1 })),
+  toggleLog: () => set((s) => ({ view: { ...s.view, logOpen: !s.view.logOpen } })),
 
   createCard: async (proj, kanban, col, name, desc) => {
     const { rootHandle } = get();
@@ -164,7 +183,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!colDir) return;
       const now = new Date().toISOString();
       const id = shortHash(name + now);
-      const safeName = name.replace(/[<>:"/\\|?*]/g, "_");
+      const safeName = name.replace(/[\s<>:"/\\|?*]/g, "_");
       const meta: Record<string, unknown> = { id, name, created_at: now };
       if (desc) meta.desc = desc;
       const content = buildFrontmatterDoc(meta, desc || "");
@@ -182,12 +201,12 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const parts = card.path.split("/");
-      let dir = rootHandle;
+      let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
-        dir = await tryGetDir(dir, parts[i]) as FileSystemDirectoryHandle;
-        if (!dir) return;
+        const next = await tryGetDir(dir, parts[i]);
+        if (!next) return;
+        dir = next;
       }
-      // move to .trash
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) return;
       const kanbanDir = await tryGetDir(projDir, kanban);
@@ -220,11 +239,11 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!destDir) return;
       const parts = card.path.split("/");
       const fileName = parts[parts.length - 1];
-      const srcContent = await readTextFile(rootHandle as unknown as FileSystemFileHandle);
-      // Can't directly read from FileSystemDirectoryHandle, need to navigate
-      let srcDir = rootHandle;
+      let srcDir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
-        srcDir = await tryGetDir(srcDir, parts[i]) as FileSystemDirectoryHandle;
+        const next = await tryGetDir(srcDir, parts[i]);
+        if (!next) return;
+        srcDir = next;
       }
       const file = await tryGetFile(srcDir, fileName);
       if (!file) return;
@@ -244,9 +263,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const parts = card.path.split("/");
-      let dir = rootHandle;
+      let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
-        dir = await tryGetDir(dir, parts[i]) as FileSystemDirectoryHandle;
+        const next = await tryGetDir(dir, parts[i]);
+        if (!next) return;
+        dir = next;
       }
       const file = await tryGetFile(dir, parts[parts.length - 1]);
       if (!file) return;
@@ -263,18 +284,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
-      const parts = card.path.split("/");
-      let dir = rootHandle;
-      for (let i = 0; i < parts.length - 1; i++) {
-        dir = await tryGetDir(dir, parts[i]) as FileSystemDirectoryHandle;
-      }
-      const file = await tryGetFile(dir, parts[parts.length - 1]);
-      if (!file) return;
-      const content = await readTextFile(file);
-      // just re-write — simple toggle on all checkboxes not possible without CLI parser
-      // in practice user edits in CardDetail
-      // so this is a placeholder — web uses editing flow instead
-      await logWebEvent(rootHandle, parts[0], "checkbox_toggle", "切换 checkbox: " + card.name);
+      await logWebEvent(rootHandle, (card.path.split("/")[0]), "checkbox_toggle", "切换 checkbox: " + card.name);
       await get().loadAll();
     } catch { /* skip */ }
   },

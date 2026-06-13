@@ -18,7 +18,7 @@ export default function Sidebar({ projects }: { projects: ProjectData[] }) {
   }
 
   function selectKanban(p: string, k: string) {
-    setView({ project: p, kanban: k, showEvents: false });
+    setView({ project: p, kanban: k });
   }
 
   function startEditReadme(projName: string) {
@@ -80,7 +80,7 @@ export default function Sidebar({ projects }: { projects: ProjectData[] }) {
                 <button
                   key={k.name}
                   onClick={() => { selectKanban(p.name, k.name); loadEvents(p.name); }}
-                  className={`w-full flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors ${view.kanban === k.name && view.project === p.name && !view.showEvents ? "bg-indigo-600/20 text-indigo-300" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
+                  className={`w-full flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors ${view.kanban === k.name && view.project === p.name ? "bg-indigo-600/20 text-indigo-300" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
                 >
                   <KanbanSquare size={14} />
                   {k.name}

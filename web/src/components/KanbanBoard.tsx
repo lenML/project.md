@@ -1,7 +1,7 @@
 import { useStore } from "../stores/useStore";
-import type { ColumnData, CardData } from "../types";
-import { CheckSquare2, Square } from "lucide-react";
-import { useState } from "react";
+import type { CardData } from "../types";
+import { CheckSquare2, Square, Plus, Search, X } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
 
 export default function KanbanBoard() {
   const projects = useStore((s) => s.projects);
@@ -9,6 +9,9 @@ export default function KanbanBoard() {
   const setView = useStore((s) => s.setView);
   const moveCard = useStore((s) => s.moveCard);
   const writeMode = useStore((s) => s.writeMode);
+  const searchQuery = useStore((s) => s.searchQuery);
+  const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const CARD_PAGE_SIZE = useStore((s) => s.CARD_PAGE_SIZE);
   const project = projects.find((p) => p.name === view.project);
   const kanban = project?.kanbans.find((k) => k.name === view.kanban);
 
@@ -17,6 +20,7 @@ export default function KanbanBoard() {
   }
 
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [cardPages, setCardPages] = useState<Record<string, number>>({});
 
   function onDrop(colName: string) {
     const cardJson = sessionStorage.getItem("drag-card");
@@ -28,30 +32,69 @@ export default function KanbanBoard() {
     sessionStorage.removeItem("drag-card");
   }
 
+  function loadMoreCards(colName: string) {
+    setCardPages((prev) => ({ ...prev, [colName]: (prev[colName] || 1) + 1 }));
+  }
+
+  const filteredColumns = useMemo(() => {
+    if (!searchQuery) return kanban.columns;
+    const q = searchQuery.toLowerCase();
+    return kanban.columns.map((col) => ({
+      ...col,
+      cards: col.cards.filter(
+        (c: CardData) =>
+          c.name.toLowerCase().includes(q) ||
+          String(c.meta.desc || "").toLowerCase().includes(q)
+      ),
+    }));
+  }, [kanban.columns, searchQuery]);
+
   return (
-    <div className="flex gap-4 h-full kanban-scroll overflow-x-auto pb-4">
-      {kanban.columns.map((col) => (
-        <ColumnView
-          key={col.name}
-          col={col}
-          onCardClick={(c) => setView({ card: c })}
-          onDrop={() => onDrop(col.name)}
-          onDragOver={() => setDragOverCol(col.name)}
-          onDragLeave={() => setDragOverCol(null)}
-          isDragOver={dragOverCol === col.name}
-          writeMode={writeMode}
-          projectName={view.project || ""}
-          kanbanName={view.kanban || ""}
-        />
-      ))}
+    <div className="flex flex-col h-full">
+      {writeMode && (
+        <div className="relative mb-3">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+            placeholder="搜索卡片..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" onClick={() => setSearchQuery("")}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
+      <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
+        {filteredColumns.map((col) => (
+          <ColumnView
+            key={col.name}
+            col={col}
+            onCardClick={(c: CardData) => setView({ card: c })}
+            onDrop={() => onDrop(col.name)}
+            onDragOver={() => setDragOverCol(col.name)}
+            onDragLeave={() => setDragOverCol(null)}
+            isDragOver={dragOverCol === col.name}
+            writeMode={writeMode}
+            projectName={view.project || ""}
+            kanbanName={view.kanban || ""}
+            cardPage={cardPages[col.name] || 1}
+            pageSize={CARD_PAGE_SIZE}
+            onLoadMore={() => loadMoreCards(col.name)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
 function ColumnView({
-  col, onCardClick, onDrop, onDragOver, onDragLeave, isDragOver, writeMode, projectName, kanbanName,
+  col, onCardClick, onDrop, onDragOver, onDragLeave, isDragOver,
+  writeMode, projectName, kanbanName, cardPage, pageSize, onLoadMore,
 }: {
-  col: ColumnData;
+  col: { name: string; cards: CardData[] };
   onCardClick: (c: CardData) => void;
   onDrop: () => void;
   onDragOver: () => void;
@@ -60,27 +103,45 @@ function ColumnView({
   writeMode: boolean;
   projectName: string;
   kanbanName: string;
+  cardPage: number;
+  pageSize: number;
+  onLoadMore: () => void;
 }) {
   const deleteCard = useStore((s) => s.deleteCard);
+  const createCard = useStore((s) => s.createCard);
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleCreate() {
+    if (!newName.trim() || !projectName || !kanbanName) return;
+    await createCard(projectName, kanbanName, col.name, newName.trim(), newDesc.trim() || undefined);
+    setNewName("");
+    setNewDesc("");
+    setShowNew(false);
+  }
+
+  const visibleCards = col.cards.slice(0, cardPage * pageSize);
+  const totalCards = col.cards.length;
+  const remaining = totalCards - visibleCards.length;
 
   return (
     <div
-      className={`flex flex-col min-w-72 max-w-72 shrink-0 rounded-lg transition-colors ${isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : ""}`}
+      className={"flex flex-col min-w-72 max-w-72 shrink-0 rounded-lg transition-colors " + (isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : "")}
       onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
     >
       <div className="col-header flex items-center gap-2 px-2 pt-2">
-        <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
-          {col.cards.length}
-        </span>
+        <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{col.cards.length}</span>
         {col.name}
       </div>
       <div className="flex flex-col gap-2 p-2 min-h-24">
-        {col.cards.length === 0 && (
+        {visibleCards.length === 0 && !showNew && (
           <div className="text-xs text-slate-600 text-center py-6">空</div>
         )}
-        {col.cards.map((card) => (
+        {visibleCards.map((card: CardData) => (
           <div
             key={card.path}
             className="card-hover"
@@ -98,9 +159,7 @@ function ColumnView({
                   onClick={(e) => { e.stopPropagation(); deleteCard(projectName, kanbanName, card); }}
                   className="text-slate-600 hover:text-red-400 transition-colors shrink-0"
                   title="移入回收站"
-                >
-                  ✕
-                </button>
+                >X</button>
               )}
             </div>
             {!!card.meta.desc && (
@@ -109,9 +168,8 @@ function ColumnView({
             {card.checkboxes.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {card.checkboxes.slice(0, 4).map((cb) => (
-                  <span
-                    key={cb.hash}
-                    className={`inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded ${cb.checked ? "bg-green-900/30 text-green-400" : "bg-slate-700/50 text-slate-400"}`}
+                  <span key={cb.hash}
+                    className={"inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded " + (cb.checked ? "bg-green-900/30 text-green-400" : "bg-slate-700/50 text-slate-400")}
                   >
                     {cb.checked ? <CheckSquare2 size={10} /> : <Square size={10} />}
                     {cb.text}
@@ -124,6 +182,39 @@ function ColumnView({
             )}
           </div>
         ))}
+        {remaining > 0 && (
+          <button onClick={onLoadMore}
+            className="text-xs text-indigo-400 hover:text-indigo-300 py-2 border border-dashed border-slate-700/50 rounded transition-colors">
+            加载更多 ({remaining})
+          </button>
+        )}
+        {writeMode && !showNew && (
+          <button onClick={() => { setShowNew(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+            className="flex items-center justify-center gap-1 text-xs text-slate-500 hover:text-slate-300 py-2 border border-dashed border-slate-700/30 rounded transition-colors">
+            <Plus size={14} /> 新建卡片
+          </button>
+        )}
+        {writeMode && showNew && (
+          <div className="border border-slate-600/50 bg-slate-800/80 rounded-lg p-2 space-y-2">
+            <input ref={inputRef}
+              className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+              placeholder="卡片名称"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); if (e.key === "Escape") setShowNew(false); }}
+            />
+            <input
+              className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
+              placeholder="描述 (可选)"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+            />
+            <div className="flex gap-1.5">
+              <button onClick={handleCreate} className="flex-1 px-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded text-xs font-medium text-white transition-colors">创建</button>
+              <button onClick={() => setShowNew(false)} className="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300 transition-colors">取消</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

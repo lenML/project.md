@@ -39,6 +39,6 @@ export interface EventRecord {
 export interface ViewState {
   project: string | null;
   kanban: string | null;
-  showEvents: boolean;
   card: CardData | null;
+  logOpen: boolean;
 }

@@ -33,7 +33,7 @@ export default function CardDetail() {
 
   const cardEvents = events.filter((e) => {
     const m = e.meta as Record<string, unknown> | undefined;
-    return m?.item_name === c.name || m?.file_path?.toString().includes(c.path);
+    return (m?.item_name === c.name || (m?.file_path?.toString() || "").includes(c.path));
   });
 
   return (
