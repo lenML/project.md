@@ -1,7 +1,8 @@
 import type { Command } from "commander";
 import path from "node:path";
-import { item_new, item_list, item_show, item_remove } from "../core/item.js";
+import { item_new, item_list, item_show } from "../core/item.js";
 import { item_move_with_check } from "../core/checklist.js";
+import { trash_item, permanent_delete, list_trash } from "../core/trash.js";
 
 export function item_commands(program: Command): void {
   function root(): string {
@@ -68,9 +69,26 @@ export function item_commands(program: Command): void {
 
   cmd
     .command("rm <item_path>")
-    .description("删除卡片")
+    .description("移入回收站")
     .action(async (item_path_str) => {
-      await item_remove(path.join(root(), item_path_str));
-      console.log("removed");
+      const result = await trash_item(path.join(root(), item_path_str));
+      console.log("trashed: " + result);
+    });
+
+  cmd
+    .command("purge <item_path>")
+    .description("永久删除（慎用）")
+    .action(async (item_path_str) => {
+      await permanent_delete(path.join(root(), item_path_str));
+      console.log("purged");
+    });
+
+  cmd
+    .command("trash-ls <kanban_path>")
+    .description("列出回收站内容 (path = project/kanban)")
+    .action(async (kanban_path_str) => {
+      const items = await list_trash(path.join(root(), kanban_path_str));
+      if (items.length === 0) return console.log("(empty)");
+      items.forEach((p) => console.log(p));
     });
 }

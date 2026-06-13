@@ -1,13 +1,16 @@
 import path from 'node:path';
 import { ensure_dir, list_dir, remove_dir } from '../utils/fs.js';
+import { ensure_trash } from './trash.js';
 
 /**
- * 创建 kanban 目录。
+ * 创建 kanban 目录，并自动创建 .trash 回收站。
  * @returns kanban 绝对路径
  */
 export async function kanban_init(project_dir: string, name: string): Promise<string> {
   const k_dir = path.join(project_dir, name);
-  return ensure_dir(k_dir);
+  await ensure_dir(k_dir);
+  await ensure_trash(k_dir);
+  return k_dir;
 }
 
 /**

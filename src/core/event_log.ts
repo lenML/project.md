@@ -8,6 +8,7 @@ export type EventType =
   | "item_create"
   | "item_move"
   | "item_delete"
+  | "item_trash"
   | "checkbox_toggle";
 
 export interface EventRecord {
@@ -21,6 +22,10 @@ export interface EventRecord {
 
 function get_events_path(project_dir: string): string {
   return path.join(project_dir, "events.jsonl");
+}
+
+function get_web_events_path(project_dir: string): string {
+  return path.join(project_dir, "events.web.jsonl");
 }
 
 /**
@@ -59,12 +64,14 @@ export async function list_events(
   project_dir: string,
   query: EventQuery = {},
 ): Promise<EventRecord[]> {
-  const file_path = get_events_path(project_dir);
-  if (!existsSync(file_path)) return [];
-
-  const content = await readFile(file_path, "utf-8");
-  const lines = content.trimEnd().split("\n").filter(Boolean);
-  const all: EventRecord[] = lines.map((l) => JSON.parse(l) as EventRecord);
+  const all: EventRecord[] = [];
+  for (const fname of ["events.jsonl", "events.web.jsonl"]) {
+    const fp = path.join(project_dir, fname);
+    if (!existsSync(fp)) continue;
+    const content = await readFile(fp, "utf-8");
+    const lines = content.trimEnd().split("\n").filter(Boolean);
+    all.push(...lines.map((l) => JSON.parse(l) as EventRecord));
+  }
   all.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   let filtered = all;
@@ -72,6 +79,46 @@ export async function list_events(
   if (query.offset) filtered = filtered.slice(query.offset);
   if (query.limit) filtered = filtered.slice(0, query.limit);
   return filtered;
+}
+
+/**
+ * 追加一条 web 事件到 events.web.jsonl（与 CLI 隔离，避免锁冲突）。
+ */
+export async function log_web_event(
+  project_dir: string,
+  type: EventType,
+  title: string,
+  content?: string,
+  meta?: Record<string, unknown>,
+): Promise<EventRecord> {
+  const ts = new Date().toISOString();
+  const id = short_hash("web" + type + ts + title);
+  const record: EventRecord = { id, timestamp: ts, type, title, content, meta };
+  const line = JSON.stringify(record) + "\n";
+  const file_path = get_web_events_path(project_dir);
+  if (!existsSync(path.dirname(file_path))) {
+    await mkdir(path.dirname(file_path), { recursive: true });
+  }
+  await appendFile(file_path, line, "utf-8");
+  return record;
+}
+
+/**
+ * 将 meta 中的绝对路径字段转换为相对 project_dir 的相对路径。
+ */
+export function make_paths_relative(
+  project_dir: string,
+  meta: Record<string, unknown>,
+  path_keys: string[] = ["file_path"],
+): Record<string, unknown> {
+  const result = { ...meta };
+  for (const key of path_keys) {
+    const val = result[key];
+    if (typeof val === "string") {
+      result[key] = path.relative(project_dir, val).replace(/\\/g, "/");
+    }
+  }
+  return result;
 }
 
 /**

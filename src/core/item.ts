@@ -6,7 +6,6 @@ import {
   list_dir,
   try_read_file,
   write_file,
-  remove_dir,
 } from "../utils/fs.js";
 import {
   parse_yaml_frontmatter,
@@ -18,7 +17,8 @@ import {
   run_before_hook,
   run_after_hook,
 } from "./hooks.js";
-import { log_event, get_project_dir } from "./event_log.js";
+import { log_event, get_project_dir, make_paths_relative } from "./event_log.js";
+import { trash_item } from "./trash.js";
 
 export interface ItemSummary {
   name: string;
@@ -69,13 +69,14 @@ export async function item_new(
 
   await run_after_hook(kanban_dir, "after_item_create", hook_ctx);
 
-  // event log
+  // event log (relative paths)
   const proj_dir = get_project_dir(column_dir);
-  await log_event(proj_dir, "item_create", "创建卡片: " + name, desc, {
+  await log_event(proj_dir, "item_create", "创建卡片: " + name, desc, make_paths_relative(proj_dir, {
     item_id: id,
     item_name: name,
     column: path.basename(column_dir),
-  });
+    file_path,
+  }));
 
   return { name, id, file_path };
 }
@@ -124,31 +125,27 @@ export async function item_move(
   await ensure_dir(dest_column_dir);
   await rename(file_path, dest_path);
 
-  // event log
+  // event log (relative paths)
   const proj_dir = get_project_dir(dest_column_dir);
   const item_name = file_name.replace(/\.md$/, "");
-  await log_event(proj_dir, "item_move", "移动卡片: " + item_name, undefined, {
+  await log_event(proj_dir, "item_move", "移动卡片: " + item_name, undefined, make_paths_relative(proj_dir, {
     from: path.basename(path.dirname(file_path)),
     to: path.basename(dest_column_dir),
-    item_name,
-  });
+    file_path: dest_path,
+  }, ["file_path"]));
 
   return dest_path;
 }
 
 export async function item_remove(file_path: string): Promise<void> {
-  const kanban_dir = get_kanban_dir_from_item(file_path) ?? undefined;
+  const kanban_dir = get_kanban_dir_from_item(file_path);
   const hook_ctx = { item_path: file_path };
-  const hook_result = await run_before_hook(kanban_dir, "before_item_delete", hook_ctx);
+  const hook_result = await run_before_hook(kanban_dir ?? undefined, "before_item_delete", hook_ctx);
   if (hook_result) {
     throw new Error(hook_result.message || "hook 阻止删除");
   }
 
-  // event log (before removal, to get item details)
-  const proj_dir = get_project_dir(file_path);
-  const item_name = path.basename(file_path).replace(/\.md$/, "");
-  await log_event(proj_dir, "item_delete", "删除卡片: " + item_name);
-
-  await remove_dir(file_path);
-  await run_after_hook(kanban_dir, "after_item_delete", hook_ctx);
+  // 移入回收站而非直接删除
+  await trash_item(file_path);
+  await run_after_hook(kanban_dir ?? undefined, "after_item_delete", hook_ctx);
 }

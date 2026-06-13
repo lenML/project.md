@@ -38,6 +38,11 @@ export interface CheckboxItem {
   hash: string;
 }
 
+export function buildFrontmatterDoc(metadata: Record<string, unknown>, body: string): string {
+  const yamlText = yaml.dump(metadata, { lineWidth: -1, quotingType: "'" } as Record<string, unknown>).trimEnd();
+  return FM_DELIM + "\n" + yamlText + "\n" + FM_DELIM + "\n\n" + body + "\n";
+}
+
 export function parseCheckboxes(content: string): CheckboxItem[] {
   const items: CheckboxItem[] = [];
   const lines = content.split("\n");
