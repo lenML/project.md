@@ -1,5 +1,5 @@
-import { writeFile } from "node:fs/promises";
 import { try_read_file } from "../utils/fs.js";
+import { safe_update_file } from "../utils/lock.js";
 import {
   parse_checkbox_lines,
   toggle_checkbox_by_hash,
@@ -20,8 +20,7 @@ export async function checkbox_list(
 }
 
 /**
- * 切换一个或多个 checkbox 状态。
- * 多个 hash 只触发一次 before/after hook。
+ * 切换一个或多个 checkbox 状态，带文件锁防止竞态。
  */
 export async function checkbox_toggle(
   item_path: string,
@@ -40,21 +39,19 @@ export async function checkbox_toggle(
     throw new Error(hook_result.message || "hook 阻止 toggle");
   }
 
-  let content = await try_read_file(item_path);
-  if (content === null) return;
-
-  let changed = false;
-  for (const hash of hashes) {
-    const updated = toggle_checkbox_by_hash(content, hash);
-    if (updated !== content) {
-      content = updated;
-      changed = true;
+  await safe_update_file(item_path, (content) => {
+    if (content === null) return null;
+    let current = content;
+    let changed = false;
+    for (const hash of hashes) {
+      const updated = toggle_checkbox_by_hash(current, hash);
+      if (updated !== current) {
+        current = updated;
+        changed = true;
+      }
     }
-  }
-
-  if (changed) {
-    await writeFile(item_path, content, "utf-8");
-  }
+    return changed ? current : null;
+  });
 
   await run_after_hook(kanban_dir, "after_checkbox_toggle", hook_ctx);
 }
