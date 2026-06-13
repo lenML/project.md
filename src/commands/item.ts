@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import path from "node:path";
-import { item_new, item_list, item_show, item_move, item_remove } from "../core/item.js";
+import { item_new, item_list, item_show, item_remove } from "../core/item.js";
+import { item_move_with_check } from "../core/checklist.js";
 
 export function item_commands(program: Command): void {
   function root(): string {
@@ -50,12 +51,19 @@ export function item_commands(program: Command): void {
 
   cmd
     .command("mv <item_path> <dest_column>")
-    .description("移动卡片到目标列")
-    .action(async (item_path_str, dest_str) => {
+    .description("移动卡片到目标列 (hooks 验证)")
+    .option("--force", "跳过所有检查强制移动")
+    .action(async (item_path_str, dest_str, options) => {
       const src = path.join(root(), item_path_str);
       const dest = path.join(root(), dest_str);
-      await item_move(src, dest);
-      console.log("moved to: " + dest_str);
+      try {
+        await item_move_with_check(src, dest, options.force);
+        console.log("moved to: " + dest_str);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("mv 被拒绝: " + msg);
+        process.exit(1);
+      }
     });
 
   cmd
