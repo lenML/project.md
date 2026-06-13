@@ -28,7 +28,7 @@ export async function checkbox_toggle(
 ): Promise<void> {
   if (hashes.length === 0) return;
 
-  const kanban_dir = get_kanban_dir_from_item(item_path);
+  const kanban_dir = get_kanban_dir_from_item(item_path) ?? undefined;
   const hook_ctx = { item_path };
   const hook_result = await run_before_hook(
     kanban_dir,

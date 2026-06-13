@@ -125,7 +125,7 @@ export async function item_move(
 }
 
 export async function item_remove(file_path: string): Promise<void> {
-  const kanban_dir = get_kanban_dir_from_item(file_path);
+  const kanban_dir = get_kanban_dir_from_item(file_path) ?? undefined;
   const hook_ctx = { item_path: file_path };
   const hook_result = await run_before_hook(
     kanban_dir,
