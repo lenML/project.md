@@ -1,5 +1,6 @@
 import type { Command } from "commander";
-import { project_init, project_list, project_context } from "../core/project.js";
+import path from "node:path";
+import { project_init, project_list, project_context, get_project_config } from "../core/project.js";
 
 export function project_commands(program: Command): void {
   function root(): string {
@@ -32,5 +33,15 @@ export function project_commands(program: Command): void {
       const ctx = await project_context(root(), name);
       if (ctx === null) return console.log("project '" + name + "' not found");
       console.log(ctx);
+    });
+  cmd
+    .command("config <name>")
+    .description("显示项目配置")
+    .action(async (name) => {
+      const project_dir = path.join(root(), name);
+      const config = await get_project_config(project_dir);
+      if (!config.name) return console.log("project '" + name + "' not found");
+      console.log("name: " + config.name);
+      if (config.description) console.log("desc: " + config.description);
     });
 }

@@ -6,6 +6,7 @@ import { kanban_commands } from "./commands/kanban.js";
 import { column_commands } from "./commands/column.js";
 import { item_commands } from "./commands/item.js";
 import { checkbox_commands } from "./commands/checkbox.js";
+import { event_commands } from "./commands/event.js";
 
 const program = new Command();
 
@@ -21,5 +22,6 @@ kanban_commands(program);
 column_commands(program);
 item_commands(program);
 checkbox_commands(program);
+event_commands(program);
 
 program.parse(process.argv);

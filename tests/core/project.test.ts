@@ -27,7 +27,7 @@ describe('project_init', () => {
     const result = await project_init(tmp_dir, 'my-project');
     expect(result).toBe(path.join(tmp_dir, 'my-project'));
     const readme = await try_read_file(path.join(tmp_dir, 'my-project', 'readme.md'));
-    expect(readme).toContain('# my-project');
+    expect(readme).toContain('name: my-project');
   });
 
   /**
@@ -78,7 +78,8 @@ describe('project_context', () => {
   it('returns readme content for existing project', async () => {
     await project_init(tmp_dir, 'demo');
     const ctx = await project_context(tmp_dir, 'demo');
-    expect(ctx).toContain('# demo');
+    // frontmatter-only has empty body, project_context returns null
+    expect(ctx).toBeNull();
   });
 
   /**

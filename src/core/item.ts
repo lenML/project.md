@@ -18,6 +18,7 @@ import {
   run_before_hook,
   run_after_hook,
 } from "./hooks.js";
+import { log_event, get_project_dir } from "./event_log.js";
 
 export interface ItemSummary {
   name: string;
@@ -37,12 +38,10 @@ export async function item_new(
   desc?: string,
 ): Promise<ItemSummary> {
   const now = new Date().toISOString();
-  const id = short_hash(name + now);
-  // eslint-disable-next-line no-control-regex
-  const safe_name = name.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_");
+ const id = short_hash(name + now);
+  const safe_name = Array.from(name).map(ch => ch < ' ' ? '_' : ch).join('').replace(/[<>:"/\\|?*]/g, "_");
   const file_path = path.join(column_dir, `${safe_name}.md`);
 
-  // before hook
   const kanban_dir = path.dirname(column_dir);
   const hook_ctx = { item_path: file_path, item_name: name };
   const hook_result = await run_before_hook(
@@ -59,9 +58,7 @@ export async function item_new(
     name,
     created_at: now,
   };
-  if (desc) {
-    metadata.desc = desc;
-  }
+  if (desc) metadata.desc = desc;
 
   const { build_frontmatter_doc } = await import("../utils/markdown.js");
   const body = desc || "";
@@ -71,6 +68,14 @@ export async function item_new(
   await write_file(file_path, content);
 
   await run_after_hook(kanban_dir, "after_item_create", hook_ctx);
+
+  // event log
+  const proj_dir = get_project_dir(column_dir);
+  await log_event(proj_dir, "item_create", "创建卡片: " + name, desc, {
+    item_id: id,
+    item_name: name,
+    column: path.basename(column_dir),
+  });
 
   return { name, id, file_path };
 }
@@ -86,16 +91,13 @@ export async function item_list(dir_path: string): Promise<ItemSummary[]> {
     const parsed = parse_yaml_frontmatter(content);
     if (parsed === null) continue;
     const id = (parsed.metadata.id as string) || "";
-    const name =
-      (parsed.metadata.name as string) || entry.name.replace(/\.md$/, "");
+    const name = (parsed.metadata.name as string) || entry.name.replace(/\.md$/, "");
     items.push({ name, id, file_path });
   }
   return items;
 }
 
-export async function item_show(
-  file_path: string,
-): Promise<ItemDetail | null> {
+export async function item_show(file_path: string): Promise<ItemDetail | null> {
   const content = await try_read_file(file_path);
   if (content === null) return null;
   const parsed = parse_yaml_frontmatter(content);
@@ -121,22 +123,32 @@ export async function item_move(
   const dest_path = path.join(dest_column_dir, file_name);
   await ensure_dir(dest_column_dir);
   await rename(file_path, dest_path);
+
+  // event log
+  const proj_dir = get_project_dir(dest_column_dir);
+  const item_name = file_name.replace(/\.md$/, "");
+  await log_event(proj_dir, "item_move", "移动卡片: " + item_name, undefined, {
+    from: path.basename(path.dirname(file_path)),
+    to: path.basename(dest_column_dir),
+    item_name,
+  });
+
   return dest_path;
 }
 
 export async function item_remove(file_path: string): Promise<void> {
   const kanban_dir = get_kanban_dir_from_item(file_path) ?? undefined;
   const hook_ctx = { item_path: file_path };
-  const hook_result = await run_before_hook(
-    kanban_dir,
-    "before_item_delete",
-    hook_ctx,
-  );
+  const hook_result = await run_before_hook(kanban_dir, "before_item_delete", hook_ctx);
   if (hook_result) {
     throw new Error(hook_result.message || "hook 阻止删除");
   }
 
-  await remove_dir(file_path);
+  // event log (before removal, to get item details)
+  const proj_dir = get_project_dir(file_path);
+  const item_name = path.basename(file_path).replace(/\.md$/, "");
+  await log_event(proj_dir, "item_delete", "删除卡片: " + item_name);
 
+  await remove_dir(file_path);
   await run_after_hook(kanban_dir, "after_item_delete", hook_ctx);
 }

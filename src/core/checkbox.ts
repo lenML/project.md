@@ -1,15 +1,8 @@
 import { try_read_file } from "../utils/fs.js";
 import { safe_update_file } from "../utils/lock.js";
-import {
-  parse_checkbox_lines,
-  toggle_checkbox_by_hash,
-  type CheckboxItem,
-} from "../utils/markdown.js";
-import {
-  get_kanban_dir_from_item,
-  run_before_hook,
-  run_after_hook,
-} from "./hooks.js";
+import { parse_checkbox_lines, toggle_checkbox_by_hash, type CheckboxItem } from "../utils/markdown.js";
+import { get_kanban_dir_from_item, run_before_hook, run_after_hook } from "./hooks.js";
+import { log_event, get_project_dir } from "./event_log.js";
 
 export async function checkbox_list(
   item_path: string,
@@ -54,4 +47,11 @@ export async function checkbox_toggle(
   });
 
   await run_after_hook(kanban_dir, "after_checkbox_toggle", hook_ctx);
+
+  // event log
+  const proj_dir = get_project_dir(item_path);
+  await log_event(proj_dir, "checkbox_toggle", "切换 checkbox: " + hashes.join(", "), undefined, {
+    item_path,
+    hashes,
+  });
 }
