@@ -1,0 +1,39 @@
+import type { Command } from "commander";
+import path from "node:path";
+import { kanban_init, kanban_list, kanban_remove } from "../core/kanban.js";
+import { split_first } from "./_helpers.js";
+
+export function kanban_commands(program: Command): void {
+  function root(): string {
+    return (program.getOptionValue("dir") as string) || "";
+  }
+
+  const cmd = program.command("kanban").description("看板管理");
+
+  cmd
+    .command("ls <project>")
+    .description("列出项目下的看板")
+    .action(async (project_name) => {
+      const list = await kanban_list(path.join(root(), project_name));
+      if (list.length === 0) return console.log("(empty)");
+      list.forEach((n) => console.log(n));
+    });
+
+  cmd
+    .command("init <path>")
+    .description("创建看板 (格式: project/kanban)")
+    .action(async (path_str) => {
+      const { head: project_name, tail: rest } = split_first(path_str);
+      await kanban_init(path.join(root(), project_name), rest);
+      console.log("kanban: " + rest + " in " + project_name);
+    });
+
+  cmd
+    .command("rm <path>")
+    .description("删除看板 (格式: project/kanban)")
+    .action(async (path_str) => {
+      const { head: project_name, tail: rest } = split_first(path_str);
+      await kanban_remove(path.join(root(), project_name), rest);
+      console.log("removed: " + project_name + "/" + rest);
+    });
+}

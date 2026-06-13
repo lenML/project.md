@@ -9,7 +9,7 @@ import {
 /**
  * 列出 item 中所有 checkbox。
  */
-export async function todo_list(item_path: string): Promise<CheckboxItem[]> {
+export async function checkbox_list(item_path: string): Promise<CheckboxItem[]> {
   const content = await try_read_file(item_path);
   if (content === null) return [];
   return parse_checkbox_lines(content);
@@ -19,7 +19,7 @@ export async function todo_list(item_path: string): Promise<CheckboxItem[]> {
  * 切换 item 中指定 hash 的 checkbox 状态。
  * hash 不存在则不修改。
  */
-export async function todo_toggle(item_path: string, hash: string): Promise<void> {
+export async function checkbox_toggle(item_path: string, hash: string): Promise<void> {
   const content = await try_read_file(item_path);
   if (content === null) return;
   const updated = toggle_checkbox_by_hash(content, hash);

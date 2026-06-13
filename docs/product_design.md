@@ -20,7 +20,7 @@ status: draft
 | **Kanban** | `<project>/<kanban>/` | 一个看板，包含多个 column（状态列） |
 | **Column** | `<kanban>/<column>/` | 一个状态列，包含多个 item（卡片） |
 | **Item** | `<column>/<file>.md` | 一张卡片，含 yaml metadata + markdown 正文 |
-| **Todo** | 卡片中的 `- [ ]` 行 | 卡片内的子任务，通过 hash 标识 |
+| **Checkbox** | 卡片中的 `- [ ]` 行 | 卡片内的子任务，通过 hash 标识 |
 | **Context** | `<project>/readme.md` | 项目的全局上下文，所有 kanban 共享可见 |
 
 ## 目录结构
@@ -91,16 +91,16 @@ updated_at: 2024-01-02T15:30:00+08:00
 
 项目的 readme.md 不包含 yaml metadata，纯 markdown。内容在对应项目的任何 CLI 操作中作为上下文展示。
 
-### Todo / Checkbox 系统
+### Checkbox 系统
 
-**标识方式**：对 checkbox 文本做 `sha256(text.trim())[:8]`。文本不变 ID 不变，文本修改 ID 变化（视为新 todo）。
+**标识方式**：对 checkbox 文本做 `sha256(text.trim())[:8]`。文本不变 ID 不变，文本修改 ID 变化（视为新 checkbox）。
 
 **状态**：仅通过文件中的 `- [ ]` / `- [x]` 标记。CLI 查询时扫描文件解析，不依赖外部存储。
 
 **CLI 操作**：
 
-- `pdm todo ls <item_path>` — 列出所有 checkbox 及 hash
-- `pdm todo toggle <item_path> <hash>` — 切换 hash 对应 checkbox 的完成状态
+- `pdm checkbox ls <item_path>` — 列出所有 checkbox 及 hash
+- `pdm checkbox toggle <item_path> <hash>` — 切换 hash 对应 checkbox 的完成状态
 
 **实现注意**：
 
@@ -136,10 +136,10 @@ pdm
 ├── item
 │   ├── ls <path>                      # 列出 items（path可为project/kanban/column级别）
 │   ├── new <path>                     # 在 column 下创建 item（交互式输入 name/desc）
-│   ├── show <item_path>               # 显示 item 详情（含 todos）
+│   ├── show <item_path>               # 显示 item 详情（含 checkboxes）
 │   ├── mv <item_path> <dest_column>   # 移动 item 到其他 column
 │   └── rm <item_path>                 # 删除 item（需确认）
-└── todo
+└── checkbox
     ├── ls <item_path>                 # 列出 item 内的 checkbox
     └── toggle <item_path> <hash>      # 切换 checkbox 状态
 ```
@@ -196,7 +196,7 @@ pdm
 1. 项目初始化：`init`、`project init`
 2. 看板管理：`kanban`、`column` CRUD
 3. 卡片管理：`item` CRUD + `item mv`
-4. 待办管理：`todo ls`、`todo toggle`
+4. 待办管理：`checkbox ls`、`checkbox toggle`
 5. 本地模式：仅文件夹操作，无数据库、无网络
 6. CLI 工具：pdm 可执行文件
 

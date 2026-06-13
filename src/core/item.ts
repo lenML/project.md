@@ -23,7 +23,7 @@ export interface ItemSummary {
 export interface ItemDetail {
   metadata: Record<string, unknown>;
   body: string;
-  todos: CheckboxItem[];
+  checkboxes: CheckboxItem[];
 }
 
 /**
@@ -91,13 +91,13 @@ export async function item_show(file_path: string): Promise<ItemDetail | null> {
     return {
       metadata: {},
       body: content,
-      todos: parse_checkbox_lines(content),
+      checkboxes: parse_checkbox_lines(content),
     };
   }
   return {
     metadata: parsed.metadata,
     body: parsed.body,
-    todos: parse_checkbox_lines(parsed.body),
+    checkboxes: parse_checkbox_lines(parsed.body),
   };
 }
 

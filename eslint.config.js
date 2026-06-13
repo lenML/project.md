@@ -1,6 +1,6 @@
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import globals from 'globals';
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import globals from "globals";
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -18,28 +18,30 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.ts'],
+    files: ["**/*.ts"],
     rules: {
-      '@typescript-eslint/naming-convention': [
-        'error',
-        { selector: 'default', format: ['snake_case'], leadingUnderscore: 'allow' },
-        { selector: 'objectLiteralProperty', format: null },
-        { selector: 'typeProperty', format: null },
-        { selector: 'typeLike', format: ['PascalCase'] },
+      "@typescript-eslint/naming-convention": [
+        "error",
+        { selector: "default", format: ["snake_case"], leadingUnderscore: "allow" },
+        { selector: "objectLiteralProperty", format: null },
+        { selector: "typeProperty", format: null },
+        { selector: "typeLike", format: ["PascalCase"] },
         {
-          selector: 'variable',
-          modifiers: ['const'],
-          format: ['snake_case', 'UPPER_CASE'],
+          selector: "variable",
+          modifiers: ["const"],
+          format: ["snake_case", "UPPER_CASE", "camelCase"],
         },
+        { selector: "import", format: ["snake_case", "camelCase", "PascalCase"] },
       ],
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_' },
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
       ],
-      'no-console': 'off',
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "no-console": "off",
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', 'coverage/'],
+    ignores: ["dist/", "node_modules/", "coverage/"],
   },
 );

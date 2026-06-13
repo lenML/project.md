@@ -106,11 +106,11 @@ describe('item_show', () => {
     const detail = await item_show(created.file_path);
     expect(detail).not.toBeNull();
     expect(detail!.metadata.name).toBe('带有待办');
-    expect(detail!.todos).toHaveLength(2);
-    expect(detail!.todos[0].text).toBe('first');
-    expect(detail!.todos[0].checked).toBe(false);
-    expect(detail!.todos[1].text).toBe('done');
-    expect(detail!.todos[1].checked).toBe(true);
+    expect(detail!.checkboxes).toHaveLength(2);
+    expect(detail!.checkboxes[0].text).toBe('first');
+    expect(detail!.checkboxes[0].checked).toBe(false);
+    expect(detail!.checkboxes[1].text).toBe('done');
+    expect(detail!.checkboxes[1].checked).toBe(true);
   });
 });
 

@@ -1,21 +1,23 @@
-import yaml from 'js-yaml';
-import { short_hash } from './hash.js';
+import yaml from "js-yaml";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import { visit } from "unist-util-visit";
+import type { ListItem, Paragraph, Text } from "mdast";
+import { short_hash } from "./hash.js";
 
-const FM_DELIM = '---';
+const FM_DELIM = "---";
 
 export interface FrontmatterResult {
   metadata: Record<string, unknown>;
   body: string;
 }
 
-/**
- * 解析 yaml frontmatter + markdown body。
- */
 export function parse_yaml_frontmatter(content: string): FrontmatterResult | null {
   const trimmed = content.trimStart();
   if (!trimmed.startsWith(FM_DELIM)) return null;
 
-  const end_idx = trimmed.indexOf('\n' + FM_DELIM, 3);
+  const end_idx = trimmed.indexOf("\n" + FM_DELIM, 3);
   if (end_idx === -1) return null;
 
   const yaml_text = trimmed.slice(3, end_idx);
@@ -25,9 +27,6 @@ export function parse_yaml_frontmatter(content: string): FrontmatterResult | nul
   return { metadata, body };
 }
 
-/**
- * 根据 metadata 和 body 构建含 frontmatter 的文档字符串。
- */
 export function build_frontmatter_doc(
   metadata: Record<string, unknown>,
   body: string,
@@ -41,45 +40,58 @@ export interface CheckboxItem {
   text: string;
   checked: boolean;
   hash: string;
-  line_index: number;
+  bracket_offset: number;
 }
 
-const CHECKBOX_RE = /^(- \[([ xX])\] (.+))/;
+function get_item_text(node: ListItem): string {
+  if (!node.children?.length) return "";
+  const first = node.children[0];
+  if (first.type !== "paragraph") return "";
+  return (first as Paragraph).children
+    .filter((c): c is Text => c.type === "text")
+    .map((c) => c.value)
+    .join("")
+    .trim();
+}
 
-/**
- * 解析 markdown 中所有 checkbox 行。
- */
+const CHECKBOX_MARKER = /\[( |x|X)\]/;
+
 export function parse_checkbox_lines(content: string): CheckboxItem[] {
-  const lines = content.split('\n');
+  const mdast = unified().use(remarkParse).use(remarkGfm).parse(content);
   const results: CheckboxItem[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(CHECKBOX_RE);
-    if (m) {
-      results.push({
-        text: m[3],
-        checked: m[2].toLowerCase() === 'x',
-        hash: short_hash(m[3]),
-        line_index: i,
-      });
-    }
-  }
+
+  visit(mdast, "listItem", (node: ListItem) => {
+    if (node.checked === null || node.checked === undefined) return;
+
+    const text = get_item_text(node);
+    const pos = node.position!;
+    const start = pos.start.offset!;
+    const end = pos.end.offset!;
+    const slice = content.slice(start, end);
+    const m = slice.match(CHECKBOX_MARKER);
+    if (!m) return;
+
+    results.push({
+      text,
+      checked: node.checked!,
+      hash: short_hash(text),
+      bracket_offset: start + m.index!,
+    });
+  });
+
   return results;
 }
 
-/**
- * 根据 hash 切换 checkbox 状态。无匹配则返回原内容。
- */
 export function toggle_checkbox_by_hash(content: string, hash: string): string {
-  const todos = parse_checkbox_lines(content);
-  const target = todos.find(t => t.hash === hash);
+  const items = parse_checkbox_lines(content);
+  const target = items.find((t) => t.hash === hash);
   if (!target) return content;
 
-  const lines = content.split('\n');
-  const line = lines[target.line_index];
-  if (target.checked) {
-    lines[target.line_index] = line.replace('- [x]', '- [ ]').replace('- [X]', '- [ ]');
-  } else {
-    lines[target.line_index] = line.replace('- [ ]', '- [x]');
-  }
-  return lines.join('\n');
+  const off = target.bracket_offset;
+  const before = content.slice(0, off);
+  const bracket = content.slice(off, off + 3);
+  const after = content.slice(off + 3);
+
+  const repl = bracket.toLowerCase() === "[x]" ? "[ ]" : "[x]";
+  return before + repl + after;
 }
