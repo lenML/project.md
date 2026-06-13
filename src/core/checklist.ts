@@ -1,17 +1,18 @@
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import { try_read_file } from "../utils/fs.js";
-import { parse_checkbox_lines } from "../utils/markdown.js";
 import { item_move } from "./item.js";
+import { parse_checkbox_lines } from "../utils/markdown.js";
+import { try_read_file } from "../utils/fs.js";
+import {
+  get_kanban_dir,
+  run_before_hook,
+  run_after_hook,
+  type HookResult,
+} from "./hooks.js";
 
-export interface ValidationResult {
-  ok: boolean;
-  message?: string;
-}
+// ── 内置验证 ──────────────────────────────────────────────────────────────
 
 export async function validate_checkboxes_all_done(
   item_path: string,
-): Promise<ValidationResult> {
+): Promise<HookResult> {
   const content = await try_read_file(item_path);
   if (content === null) return { ok: true };
 
@@ -28,56 +29,42 @@ export async function validate_checkboxes_all_done(
   };
 }
 
-interface HookContext {
-  item_path: string;
-  dest_column: string;
-}
-
-type BeforeMoveFn = (
-  ctx: HookContext,
-) => ValidationResult | Promise<ValidationResult>;
-
-async function load_hook(
-  dest_column_dir: string,
-): Promise<BeforeMoveFn | null> {
-  const kanban_dir = path.dirname(dest_column_dir);
-  const col_name = path.basename(dest_column_dir);
-  const hook_path = path.join(kanban_dir, ".hooks", col_name + ".mjs");
-
-  try {
-    const href = pathToFileURL(hook_path).href;
-    const mod = await import(href);
-    if (typeof mod.before_move === "function") return mod.before_move;
-    return null;
-  } catch {
-    return null;
-  }
-}
+// ── 带 hooks 的 move ──────────────────────────────────────────────────────
 
 export async function item_move_with_check(
   item_path: string,
   dest_column_dir: string,
   force = false,
 ): Promise<string> {
-  const col_name = path.basename(dest_column_dir);
+  const kanban_dir = get_kanban_dir(dest_column_dir);
+  const col_name = dest_column_dir.split(/[/\\]/).pop() || "";
+  const ctx = { item_path, dest_column: col_name };
 
   if (!force) {
-    const hook = await load_hook(dest_column_dir);
-    if (hook) {
-      const result = await hook({ item_path, dest_column: col_name });
-      if (!result.ok) {
-        throw new Error(result.message || "hook 阻止移动");
-      }
-      return item_move(item_path, dest_column_dir);
+    // 1. 自定义 hook
+    const hook_result = await run_before_hook(
+      kanban_dir,
+      "before_item_move",
+      ctx,
+    );
+    if (hook_result) {
+      throw new Error(hook_result.message || "hook 阻止移动");
     }
 
+    // 2. 内置 done 检查（仅当无 hook 拦截时）
     if (col_name === "done") {
-      const result = await validate_checkboxes_all_done(item_path);
-      if (!result.ok) {
-        throw new Error("未完成的 checkbox: " + result.message);
+      const built_in = await validate_checkboxes_all_done(item_path);
+      if (!built_in.ok) {
+        throw new Error("未完成的 checkbox: " + built_in.message);
       }
     }
   }
 
-  return item_move(item_path, dest_column_dir);
+  // 3. 移动
+  const result = await item_move(item_path, dest_column_dir);
+
+  // 4. after hook
+  await run_after_hook(kanban_dir, "after_item_move", ctx);
+
+  return result;
 }
