@@ -22,7 +22,9 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/naming-convention': [
         'error',
-        { selector: 'default', format: ['snake_case'] },
+        { selector: 'default', format: ['snake_case'], leadingUnderscore: 'allow' },
+        { selector: 'objectLiteralProperty', format: null },
+        { selector: 'typeProperty', format: null },
         { selector: 'typeLike', format: ['PascalCase'] },
         {
           selector: 'variable',
