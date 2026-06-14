@@ -30,7 +30,7 @@ temp/todomvc/         # TodoMVC 测试项目
 
 测试时使用：
 ```bash
-node dist/index.js --dir ./temp/.projects <command>
+pmd --dir ./temp/.projects <command>
 ```
 
 ## Global Install
@@ -78,5 +78,5 @@ pnpm lint     # eslint src/
 
 ## Path Convention
 
-所有 CLI 路径：`<project>/<kanban>/<column>/<item>`，相对于 `--dir` 指定的根目录。
+所有 CLI 路径使用标志定位：`-p <project> -k <kanban> -c <col>`，相对于 `--dir` 指定的根目录。
 绝对路径也支持（用于 `checkbox toggle`、`item show` 等）。

@@ -8,32 +8,27 @@ Markdown-based project manager. 文件夹即看板，markdown 即卡片，全文
 # 全局安装（已 link）
 pmd init                          # 初始化 ~/.project.md/
 pmd project init my-project       # 创建项目
-pmd kanban init my-project/dev    # 创建设看板
-pmd kanban init my-project/dev --bp  # 最佳实践看板（idea/todo/doing/done + hooks）
-pmd item new my-project/dev/todo "实现登录" -d "用户登录功能"
 
-# 查看
-pmd kanban show my-project/dev    # 看板概览（含卡片 ID）
-pmd item ls my-project/dev/todo
+# 标志式定位：-p project -k kanban -c col
+pmd -p my-project kanban init dev            # 创建看板
+pmd -p my-project -k dev kanban show         # 看板概览
+pmd -p my-project -k dev -c todo item ls     # 查看任务
 
 # 通过 ID 操作卡片
-pmd item show <id>                # 8 位 hex ID，无需完整路径
-pmd item mv <id> my-project/dev/done
+pmd item show <id>
+pmd -p my-project -k dev -c done item mv <id>     # 移动到 done
 pmd checkbox toggle <id> <hash>
 
-# checkbox
-pmd checkbox ls <item-path>       # 支持多级 checkbox，按层级缩进
-pmd checkbox toggle <item-path> <hash1> <hash2>  # toggle 父级时子级联动
-
-# 工作目录绑定
+# 绑定后 -p 可省略
 cd my-project
 pmd project bind my-project       # 绑定当前目录到项目
-pmd kanban show dev               # 路径自动补全
-pmd --force kanban ls other-project  # 覆盖绑定访问其他项目
+pmd -k dev kanban show            # -p 自动从绑定读取
+pmd -k dev -c todo item new "实现登录" -d "用户登录功能"
+pmd --force -p other-project kanban ls  # 覆盖绑定访问其他项目
 pmd project unbind                # 解除绑定
 
 # 事件日志
-pmd event ls my-project --limit 10
+pmd -p my-project event ls --limit 10
 ```
 
 ## Core Concepts
@@ -69,33 +64,33 @@ pmd <命令> [选项]
   project unbind                  解除绑定
 
 看板管理:
-  kanban ls <project>             列出看板
-  kanban init <project>/<name>    创建看板（--bp 最佳实践模板）
+  kanban ls                       列出看板（使用 -p/--project）
+  kanban init <name>              创建看板（使用 -p/--project，--bp）
   kanban show [project/]<name>   看板概览（绑定后可省略路径，显示所有看板）
-  kanban cols <project>/<name>    列出看板下的列
-  kanban rm <project>/<name>      删除看板
+  kanban cols                     列出看板下的列（使用 -p/--project -k/--kanban）
+  kanban rm <name>                删除看板（使用 -p/--project）
 
 列管理:
-  column ls <path>                列出列
-  column init <path>              创建列
+  column ls                       列出列（使用 -p/--project -k/--kanban）
+  column init <name>              创建列（使用 -p/--project -k/--kanban）
 
 卡片管理:
-  item ls <path>                  列出卡片（支持绑定路径）
-  item new <path> <name> [-d desc] 创建卡片
-  item show <item_path>           查看卡片详情（支持 ID）
-  item mv <item_path> <dest-column> 移动卡片（hooks 验证，支持 ID）
-  item rm <item_path>             移入回收站（支持 ID）
+  item ls                         列出卡片（使用 -p -k -c）
+  item new <name> [-d desc]       创建卡片（使用 -p -k -c）
+  item show <id>                  查看卡片详情（支持 8 位 hex ID）
+  item mv <id>                    移动卡片（使用 -c 指定目标列）
+  item rm <id>                    移入回收站（支持 ID）
 
-  item trash ls <kanban_path>     列出回收站
-  item trash purge <item_path>    永久删除（支持 ID）
+  item trash ls                   列出回收站（使用 -p -k）
+  item trash purge <id>           永久删除（支持 ID）
 
 Checkbox:
-  checkbox ls <item_path>         列出 checkbox（支持 ID，按层级缩进）
-  checkbox toggle <item_path> <hash...> 切换状态（支持多 hash，支持 ID）
+  checkbox ls <id>                列出 checkbox（支持 ID）
+  checkbox toggle <id> <hash...>  切换状态（支持多 hash）
                                      toggle 父级时子级联动
 
 事件查询:
-  event ls <project> [--type] [--limit]
+  event ls [--type] [--limit]     （使用 -p/--project）
 ```
 
 ## Working Directory Binding
@@ -103,19 +98,18 @@ Checkbox:
 ```bash
 pmd project bind my-project        # 创建 .pmd-link 绑定文件
 cd /any/where
-pmd kanban show dev                # 自动补全为 my-project/dev
-pmd item new dev/todo "Task"       # 自动补全路径
+pmd -k dev kanban show             # -p 自动从绑定读取
+pmd -k dev -c todo item new "Task"
 pmd project unbind                 # 解除
 ```
 
-绑定后路径**不需要写项目前缀**，CLI 自动补全。绑定状态下访问其他项目会被拒绝：
+绑定后 `-p` 可省略（自动从绑定读取），但访问其他项目会被拒绝：
 
 ```bash
-pmd kanban ls                    # 列出绑定项目的看板
-pmd kanban show                  # 绑定项目所有看板概览
-pmd kanban show dev              # = my-project/dev
-pmd kanban ls other-project      # Error: bound to "my-project", refusing "other-project"
-pmd --force kanban ls other-project  # 使用 --force 覆盖
+pmd -p my-project kanban ls        # 列出绑定项目的看板
+pmd -p my-project -k dev kanban show
+pmd -p other-project kanban ls     # Error: bound
+pmd --force -p other-project kanban ls  # 使用 --force
 ```
 
 `project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force` 或先 `project unbind`）。
@@ -125,9 +119,9 @@ pmd --force kanban ls other-project  # 使用 --force 覆盖
 所有卡片创建时自动生成 8 位 hex ID。后续可通过 ID 操作：
 
 ```bash
-pmd kanban show my-project/dev     # 查看卡片 ID
-pmd item show abc12345             # 无需完整路径
-pmd item mv abc12345 my-project/dev/done
+pmd -p my-project -k dev kanban show     # 查看卡片 ID
+pmd item show abc12345                   # 无需完整路径
+pmd -p my-project -k dev -c done item mv abc12345
 pmd checkbox toggle abc12345 hash1 hash2
 pmd item rm abc12345
 ```

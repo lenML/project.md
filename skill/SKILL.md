@@ -23,16 +23,16 @@ pmd --dir <root> <command> <subcommand> <args>
 All paths are relative to `--dir`:
 
 ```
-<project>                       # project name
-<project>/<kanban>              # project/kanban
-<project>/<kanban>/<column>     # column
-<project>/<kanban>/<column>/<item_name>.md  # card file
+<name>                          # kanban name (use -p/--project)
+-p/--project                    # specify project
+-k/--kanban                     # specify kanban
+-c/--col                        # specify column
 ```
 
 **ID addressing**: Cards have an 8-char hex ID. Use it anywhere a path is needed:
 ```bash
-pmd item show abc12345           # same as pmd item show project/kanban/column/file.md
-pmd item mv abc12345 project/kanban/done
+pmd item show abc12345           # use --project --kanban --col to locate
+pmd -p myproject -k mykanban -c done item mv abc12345
 pmd checkbox toggle abc12345 hash1 hash2
 ```
 
@@ -50,18 +50,18 @@ pmd checkbox toggle abc12345 hash1 hash2
 
 | Command | Description |
 | --- | --- |
-| `pmd kanban ls <project>` | List kanbans in a project |
-| `pmd kanban init <project>/<name>` | Create a kanban |
-| `pmd kanban init <project>/<name> --bp` | Create with best-practice template (idea/todo/doing/done + hooks) |
-| `pmd kanban show <project>/<name>` | **Overview**: all columns + card count + card IDs and names |
-| `pmd kanban cols <project>/<name>` | List columns in a kanban |
-| `pmd kanban rm <project>/<name>` | Delete a kanban |
+| `pmd kanban ls` | List kanbans (use -p/--project) |
+| `pmd kanban init <name>` | Create a kanban (use -p/--project) |
+| `pmd kanban init <name> --bp` | Create with best-practice template (use -p/--project) |
+| `pmd kanban show` | Kanban overview (use -p/--project -k/--kanban) |
+| `pmd kanban cols` | List columns (use -p/--project -k/--kanban) |
+| `pmd kanban rm <name>` | Delete a kanban (use -p/--project) |
 
 ### Card Management
 
 | Command | Description |
 | --- | --- |
-| `pmd item ls <path>` | List cards in a column (`path` = project/kanban/column) |
+| `pmd item ls` | List cards (use -p/--project -k/--kanban -c/--col) |
 | `pmd item new <path> <name> -d <desc>` | Create a card |
 | `pmd item show <id>` | Show card detail (supports **ID**) |
 | `pmd item mv <path> <dest_column_path>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
@@ -118,20 +118,20 @@ pmd --force kanban show other-proj/kanban   # override binding for this command
 
 | Command | Description |
 | --- | --- |
-| `pmd event ls <project>` | List operation events (reverse chronological) |
-| `pmd event ls <project> --limit 5` | Limit to 5 |
-| `pmd event ls <project> --type item_move` | Filter by type |
+| `pmd event ls` | List operation events (use -p/--project) |
+| `pmd event ls --limit 5` | Limit to 5 (use -p/--project) |
+| `pmd event ls --type item_move` | Filter by type (use -p/--project) |
 
 Event types: `project_init`, `item_create`, `item_move`, `item_trash`, `item_delete`, `checkbox_toggle`
 
 ## Agent Workflow (Best Practice)
 
 ```text
-1. Check what's available:       pmd kanban show <project>/<kanban>
+1. Check what's available:       pmd -p <project> -k <kanban> kanban show
 2. Read a task:                  pmd item show <id>
-3. Start working:                pmd item mv <id> <project>/<kanban>/doing
+3. Start working:                pmd -p <project> -k <kanban> -c doing item mv <id>
 4. Tick subtasks:                pmd checkbox toggle <id> <hash1> <hash2>
-5. Mark complete:                pmd item mv <id> <project>/<kanban>/done
+5. Mark complete:                pmd -p <project> -k <kanban> -c done item mv <id>
 ```
 
 ## Edge Cases & Tips
@@ -158,7 +158,7 @@ pmd checkbox toggle <item_path> <hash>
 
 ### Event log for debugging
 ```bash
-pmd event ls <project> --limit 10
+pmd -p project event ls --limit 10
 ```
 
 ### Lock conflicts
@@ -167,7 +167,7 @@ Both files are read by `pmd event ls` and the web UI.
 
 ### Best practice template
 ```bash
-pmd kanban init <project>/dev --bp
+pmd -p project kanban init dev --bp
 ```
 Creates: `idea/` (idea parking), `todo/`, `doing/`, `done/` + default `.hooks/index.mjs`.
 The `idea` column is for capturing ideas without deadlines. Cards only become actionable when moved to `todo`/`doing`.
