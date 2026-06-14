@@ -46,6 +46,7 @@ pdm --version         # 全局可用（npm link）
 ```bash
 cd /my/workspace
 pdm project bind my-app
+pdm kanban show              # 显示所有看板概览
 pdm kanban show dev/todo     # = my-app/dev/todo
 pdm --force kanban show other-proj/xxx  # 覆盖绑定
 ```

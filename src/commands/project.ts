@@ -32,8 +32,9 @@ export function project_commands(program: Command): void {
     .action(async (name) => {
       const bound = get_bound_project();
       if (bound && !force_flag()) {
+        console.error(`[proj: ${bound}] (bound)`);
         throw new Error(
-          `bound to project "${bound}", refusing to init. Use --force to override.`,
+          `cannot init project while bound to "${bound}". Run "pdm project unbind" first, or use --force to override.`,
         );
       }
       await project_init(root(), name);

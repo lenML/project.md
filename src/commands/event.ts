@@ -40,7 +40,10 @@ export function event_commands(program: Command): void {
       if (events.length === 0) return console.log("(empty)");
       for (const e of events) {
         const ts = new Date(e.timestamp).toLocaleString("zh-CN");
-        console.log(`${e.id}  ${ts}  [${e.type}]  ${e.title}`);
+        const detail = e.type === "item_move" && e.meta?.from && e.meta?.to
+          ? `  (${e.meta.from as string} → ${e.meta.to as string})`
+          : "";
+        console.log(`${e.id}  ${ts}  [${e.type}]  ${e.title}${detail}`);
         if (e.content) console.log("   " + e.content);
       }
     });

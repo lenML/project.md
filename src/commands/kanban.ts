@@ -54,10 +54,43 @@ export function kanban_commands(program: Command): void {
     });
 
   cmd
-    .command("show <path>")
-    .description("看板概览 (格式: project/kanban) — 列出所有列及卡片")
+    .command("show [path]")
+    .description("看板概览 (格式: project/kanban, 绑定后可省略 path)")
     .action(async (path_str) => {
-      const kanban_dir = prepend_bound(root(), path_str, force_flag());
+      const { get_bound_project } = await import("./_helpers.js");
+      const dir = root();
+
+      if (!path_str) {
+        const bound = get_bound_project();
+        if (!bound) {
+          console.error("need kanban path or binding");
+          process.exit(1);
+        }
+        // Show all kanbans overview in bound project
+        const project_dir = path.join(dir, bound);
+        const { kanban_list } = await import("../core/kanban.js");
+        const { column_list } = await import("../core/column.js");
+        const { item_list } = await import("../core/item.js");
+        const kanbans = await kanban_list(project_dir);
+        if (kanbans.length === 0) return console.log("(empty — no kanbans in " + bound + ")");
+        console.log(`[proj: ${bound}] project overview`);
+        console.log("");
+        for (const kb of kanbans) {
+          console.log("── " + kb + " ──");
+          const cols = await column_list(path.join(project_dir, kb));
+          for (const col of cols) {
+            const items = await item_list(path.join(project_dir, kb, col));
+            const cards = items.map((i) => "  " + i.id + "  " + i.name).join("\n");
+            console.log(col + " (" + items.length + "):");
+            if (items.length > 0) console.log(cards);
+          }
+          console.log("");
+        }
+        console.log("提示: 使用 pdm checkbox --help 管理子任务");
+        return;
+      }
+
+      const kanban_dir = prepend_bound(dir, path_str, force_flag());
       const cols = await column_list(kanban_dir);
       if (cols.length === 0) return console.log("(empty kanban)");
       for (const col of cols) {

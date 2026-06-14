@@ -173,15 +173,35 @@ Creates: `idea/` (idea parking), `todo/`, `doing/`, `done/` + default `.hooks/in
 The `idea` column is for capturing ideas without deadlines. Cards only become actionable when moved to `todo`/`doing`.
 The `done` column has built-in hooks to validate all checkboxes.
 
-### Working directory binding
+### Working directory binding — 路径简写
+
+绑定后路径**不需要写项目前缀**，CLI 自动补全：
+
 ```bash
-pdm project bind <name>    # creates .pmd-link in cwd
-pdm project unbind         # removes it
+cd /my/workspace
+pdm project bind my-app
+
+# 绑定前需写完整路径：
+#   pdm item new my-app/dev/todo "任务"
+#   pdm kanban show my-app/dev
+
+# 绑定后省略项目名：
+pdm item new dev/todo "任务"
+pdm kanban show dev
+pdm kanban show              # 不指定 kanban 时显示项目所有看板概览
+pdm item ls dev/todo
 ```
-When bound, all path arguments are auto-prepended with the project name.
-Use `pdm kanban show dev` instead of `pdm kanban show my-app/dev`.
-Output shows `[proj: xxx]` prefix.
-Unbind to work with other projects.
+
+显式写完整路径 `my-app/dev` 也支持（自动去重，不会双倍补全）。  
+`[proj: xxx]` 前缀表示当前绑定状态。
+
+**阻止跨项目**：绑定状态下访问其他项目会报错，用 `--force` 覆盖：
+
+```bash
+pdm --force kanban show other-proj/kanban
+```
+
+绑定状态下 `project init` 也会被阻止（需 `--force` 或先 `project unbind`）。
 
 ### Path resolution
 Paths in `item show` output and event logs are relative to `--dir`.

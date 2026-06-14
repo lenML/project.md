@@ -71,7 +71,7 @@ pdm <命令> [选项]
 看板管理:
   kanban ls <project>             列出看板
   kanban init <project>/<name>    创建看板（--bp 最佳实践模板）
-  kanban show <project>/<name>    看板概览 — 列 + 卡片 ID/名称
+  kanban show [project/]<name>   看板概览（绑定后可省略路径，显示所有看板）
   kanban cols <project>/<name>    列出看板下的列
   kanban rm <project>/<name>      删除看板
 
@@ -108,14 +108,17 @@ pdm item new dev/todo "Task"       # 自动补全路径
 pdm project unbind                 # 解除
 ```
 
-绑定后所有路径自动补全项目前缀，输出显示 `[proj: xxx]`。绑定状态下访问其他项目会被拒绝：
+绑定后路径**不需要写项目前缀**，CLI 自动补全。绑定状态下访问其他项目会被拒绝：
 
 ```bash
-pdm kanban ls other-project        # Error: bound to "my-project", refusing "other-project"
+pdm kanban ls                    # 列出绑定项目的看板
+pdm kanban show                  # 绑定项目所有看板概览
+pdm kanban show dev              # = my-project/dev
+pdm kanban ls other-project      # Error: bound to "my-project", refusing "other-project"
 pdm --force kanban ls other-project  # 使用 --force 覆盖
 ```
 
-`project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force`）。
+`project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force` 或先 `project unbind`）。
 
 ## ID Addressing
 
