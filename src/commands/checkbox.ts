@@ -6,6 +6,9 @@ export function checkbox_commands(program: Command): void {
   function root(): string {
     return (program.getOptionValue("dir") as string) || "";
   }
+  function force_flag(): boolean {
+    return (program.getOptionValue("force") as boolean) || false;
+  }
 
   const cmd = program.command("checkbox").description("checkbox 管理");
 
@@ -13,7 +16,7 @@ export function checkbox_commands(program: Command): void {
     .command("ls <item_path>")
     .description("列出卡片内的 checkbox (支持 ID)")
     .action(async (item_path_str) => {
-      const resolved = await resolve_item_path(root(), item_path_str);
+      const resolved = await resolve_item_path(root(), item_path_str, force_flag());
       if (!resolved) return console.log("item not found (ID: " + item_path_str + ")");
       const items = await checkbox_list(resolved);
       if (items.length === 0) return console.log("(empty)");
@@ -28,7 +31,7 @@ export function checkbox_commands(program: Command): void {
     .command("toggle <item_path> <hash...>")
     .description("切换 checkbox 完成状态（支持多 hash，支持 ID）")
     .action(async (item_path_str, hashes) => {
-      const resolved = await resolve_item_path(root(), item_path_str);
+      const resolved = await resolve_item_path(root(), item_path_str, force_flag());
       if (!resolved) { console.error("item not found (ID: " + item_path_str + ")"); process.exit(1); }
       await checkbox_toggle(resolved, ...hashes);
       console.log("toggled");

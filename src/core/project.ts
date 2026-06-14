@@ -1,4 +1,5 @@
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { ensure_dir, list_dir, try_read_file, write_file } from "../utils/fs.js";
 import { parse_yaml_frontmatter, build_frontmatter_doc } from "../utils/markdown.js";
 import { log_event } from "./event_log.js";
@@ -62,4 +63,36 @@ export async function project_context(root_dir: string, name: string): Promise<s
   const parsed = parse_yaml_frontmatter(content);
   if (parsed) return parsed.body.trim() || null;
   return content.trim() || null;
+}
+
+const LINK_FILENAME = ".pmd-link";
+
+/**
+ * 绑定当前工作目录到指定项目。
+ */
+export async function project_bind(root_dir: string, name: string): Promise<void> {
+  const project_dir = path.join(root_dir, name);
+  await ensure_dir(project_dir);
+  const link_path = path.join(process.cwd(), LINK_FILENAME);
+  await write_file(link_path, name + "\n");
+}
+
+/**
+ * 解除绑定。
+ */
+export async function project_unbind(): Promise<void> {
+  const link_path = path.join(process.cwd(), LINK_FILENAME);
+  try { await import("node:fs/promises").then(m => m.unlink(link_path)); } catch { /* ignore */ }
+}
+
+/**
+ * 获取当前目录绑定的项目名（无绑定返回 null）。
+ */
+export function get_bound_project(): string | null {
+  const link_path = path.join(process.cwd(), LINK_FILENAME);
+  try {
+    return readFileSync(link_path, "utf-8").trim() || null;
+  } catch {
+    return null;
+  }
 }

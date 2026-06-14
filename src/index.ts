@@ -14,7 +14,8 @@ program
   .name("pdm")
   .description("markdown-based project manager")
   .version("0.1.0")
-  .option("--dir <path>", "项目根目录", get_default_root());
+  .option("--dir <path>", "项目根目录", get_default_root())
+  .option("--force", "跳过项目绑定检查");
 
 init_command(program);
 project_commands(program);

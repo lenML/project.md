@@ -39,6 +39,17 @@ node dist/index.js --dir ./temp/.projects <command>
 pdm --version         # 全局可用（npm link）
 ```
 
+## Project Binding
+
+当前目录可通过 `pdm project bind <name>` 绑定到项目。绑定后所有路径自动带项目前缀，且阻止使用其他项目（通过 `--force` 覆盖）。
+
+```bash
+cd /my/workspace
+pdm project bind my-app
+pdm kanban show dev/todo     # = my-app/dev/todo
+pdm --force kanban show other-proj/xxx  # 覆盖绑定
+```
+
 ## Web Frontend
 
 `web/` 目录单独构建，与 CLI 独立。使用浏览器 File System Access API。

@@ -3,7 +3,7 @@ import path from "node:path";
 import { kanban_init, kanban_list, kanban_remove } from "../core/kanban.js";
 import { column_list } from "../core/column.js";
 import { item_list } from "../core/item.js";
-import { split_first } from "./_helpers.js";
+import { split_first, prepend_bound } from "./_helpers.js";
 
 export function kanban_commands(program: Command): void {
   function root(): string {
@@ -12,11 +12,29 @@ export function kanban_commands(program: Command): void {
 
   const cmd = program.command("kanban").description("看板管理");
 
+  function force_flag(): boolean {
+    return (program.getOptionValue("force") as boolean) || false;
+  }
+
   cmd
-    .command("ls <project>")
-    .description("列出项目下的看板")
+    .command("ls [project]")
+    .description("列出项目下的看板（绑定后可省略 project）")
     .action(async (project_name) => {
-      const list = await kanban_list(path.join(root(), project_name));
+      const { get_bound_project } = await import("./_helpers.js");
+      const dir = root();
+      let target_dir: string;
+      if (!project_name) {
+        project_name = get_bound_project();
+        if (!project_name) {
+          console.error("need project name or binding");
+          process.exit(1);
+        }
+        target_dir = path.join(dir, project_name);
+        console.log(`[proj: ${project_name}] (bound)`);
+      } else {
+        target_dir = prepend_bound(dir, project_name, force_flag());
+      }
+      const list = await kanban_list(target_dir);
       if (list.length === 0) return console.log("(empty)");
       list.forEach((n) => console.log(n));
     });
@@ -27,7 +45,7 @@ export function kanban_commands(program: Command): void {
     .option("--bp", "使用最佳实践模板（创建 idea/todo/doing/done 列 + hooks）")
     .action(async (path_str, options) => {
       const { head: project_name, tail: rest } = split_first(path_str);
-      await kanban_init(path.join(root(), project_name), rest, options.bp ? "bp" : undefined);
+      await kanban_init(prepend_bound(root(), project_name, force_flag()), rest, options.bp ? "bp" : undefined);
       if (options.bp) {
         console.log("kanban (bp): " + rest + " in " + project_name);
       } else {
@@ -39,7 +57,7 @@ export function kanban_commands(program: Command): void {
     .command("show <path>")
     .description("看板概览 (格式: project/kanban) — 列出所有列及卡片")
     .action(async (path_str) => {
-      const kanban_dir = path.join(root(), path_str);
+      const kanban_dir = prepend_bound(root(), path_str, force_flag());
       const cols = await column_list(kanban_dir);
       if (cols.length === 0) return console.log("(empty kanban)");
       for (const col of cols) {
@@ -56,7 +74,7 @@ export function kanban_commands(program: Command): void {
     .command("cols <path>")
     .description("列出看板下的列 (格式: project/kanban)")
     .action(async (path_str) => {
-      const cols = await column_list(path.join(root(), path_str));
+      const cols = await column_list(prepend_bound(root(), path_str, force_flag()));
       if (cols.length === 0) return console.log("(empty)");
       cols.forEach((n) => console.log(n));
     });
@@ -66,7 +84,7 @@ export function kanban_commands(program: Command): void {
     .description("删除看板 (格式: project/kanban)")
     .action(async (path_str) => {
       const { head: project_name, tail: rest } = split_first(path_str);
-      await kanban_remove(path.join(root(), project_name), rest);
+      await kanban_remove(prepend_bound(root(), project_name, force_flag()), rest);
       console.log("removed: " + project_name + "/" + rest);
     });
 }
