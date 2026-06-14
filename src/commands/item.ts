@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import path from "node:path";
-import { item_new, item_list, item_show } from "../core/item.js";
+import { item_new, item_list, item_show, item_import } from "../core/item.js";
 import { item_move_with_check } from "../core/checklist.js";
 import { trash_item, permanent_delete, list_trash } from "../core/trash.js";
 import { require_column_dir, require_kanban_dir, resolve_item } from "./_helpers.js";
@@ -40,6 +40,16 @@ export function item_commands(program: Command): void {
       const dir = require_column_dir(root(), program);
       const item = await item_new(dir, name, options.desc);
       console.log("created: " + item.id + " " + item.file_path);
+    });
+
+  cmd
+    .command("import <file>")
+    .description("从 markdown 文件导入卡片（使用 -p -k -c 指定目标列）")
+    .action(async (file) => {
+      const dir = require_column_dir(root(), program);
+      const resolved_path = path.resolve(file);
+      const item = await item_import(dir, resolved_path);
+      console.log("imported: " + item.id + " " + item.file_path);
     });
 
   cmd

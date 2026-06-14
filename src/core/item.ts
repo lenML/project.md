@@ -9,6 +9,7 @@ import {
 } from "../utils/fs.js";
 import {
   parse_yaml_frontmatter,
+  build_frontmatter_doc,
   parse_checkbox_lines,
   type CheckboxItem,
 } from "../utils/markdown.js";
@@ -76,8 +77,7 @@ export async function item_new(
   const metadata: Record<string, unknown> = { id, name, created_at: now };
   if (desc) metadata.desc = desc;
 
-  const { build_frontmatter_doc } = await import("../utils/markdown.js");
-  const body = desc || "";
+    const body = desc || "";
   const content = build_frontmatter_doc(metadata, body);
 
   await ensure_dir(column_dir);
@@ -145,6 +145,56 @@ export async function item_move(
   }, ["file_path"]));
 
   return dest_path;
+}
+
+export async function item_import(
+  column_dir: string,
+  source_file: string,
+): Promise<ItemSummary> {
+  const source_content = await try_read_file(source_file);
+  if (source_content === null) throw new Error("file not found: " + source_file);
+
+  const now = new Date().toISOString();
+
+  // 提取文件名作为默认名称
+  const source_basename = path.basename(source_file, ".md").replace(/[\s<>:"/\\|?*]/g, "_");
+  const id = short_hash(source_content + now);
+
+  // 解析已有 frontmatter，合并元数据
+  const parsed = parse_yaml_frontmatter(source_content);
+  let body: string;
+  let metadata: Record<string, unknown>;
+
+  if (parsed) {
+    metadata = { ...parsed.metadata, id, name: (parsed.metadata.name as string) || source_basename, created_at: now };
+    body = parsed.body;
+  } else {
+    metadata = { id, name: source_basename, created_at: now };
+    body = source_content.trim();
+  }
+
+  const kanban_dir = path.dirname(column_dir);
+  const safe_name = source_basename;
+  const file_path = path.join(column_dir, `${safe_name}.md`);
+  const hook_ctx = { item_path: file_path, item_name: metadata.name as string };
+
+  const hook_result = await run_before_hook(kanban_dir, "before_item_create", hook_ctx);
+  if (hook_result) throw new Error(hook_result.message || "hook 阻止导入");
+
+  const content = build_frontmatter_doc(metadata, body);
+  await ensure_dir(column_dir);
+  await write_file(file_path, content);
+  await run_after_hook(kanban_dir, "after_item_create", hook_ctx);
+
+  const proj_dir = get_project_dir(column_dir);
+  await log_event(proj_dir, "item_create", "导入卡片: " + (metadata.name as string), undefined, make_paths_relative(proj_dir, {
+    item_id: id,
+    item_name: metadata.name,
+    column: path.basename(column_dir),
+    file_path,
+  }, ["file_path"]));
+
+  return { name: metadata.name as string, id, file_path };
 }
 
 export async function item_remove(file_path: string): Promise<void> {
