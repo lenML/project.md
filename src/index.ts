@@ -15,6 +15,9 @@ program
   .description("markdown-based project manager")
   .version("0.1.0")
   .option("--dir <path>", "项目根目录", get_default_root())
+  .option("-p, --project <name>", "项目名（默认使用绑定）")
+  .option("-k, --kanban <name>", "看板名")
+  .option("-c, --col <name>", "列名")
   .option("--force", "跳过项目绑定检查");
 
 init_command(program);

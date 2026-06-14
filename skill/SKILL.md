@@ -63,7 +63,7 @@ pmd checkbox toggle abc12345 hash1 hash2
 | --- | --- |
 | `pmd item ls <path>` | List cards in a column (`path` = project/kanban/column) |
 | `pmd item new <path> <name> -d <desc>` | Create a card |
-| `pmd item show <item_path>` | Show card detail (supports **ID**) |
+| `pmd item show <id>` | Show card detail (supports **ID**) |
 | `pmd item mv <path> <dest_column_path>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
 | `pmd item rm <item_path>` | **Move to trash** (not permanent! supports **ID**) |
 
@@ -71,8 +71,8 @@ pmd checkbox toggle abc12345 hash1 hash2
 
 | Command | Description |
 | --- | --- |
-| `pmd checkbox ls <item_path>` | List all checkboxes (supports **ID**, shows depth hierarchy) |
-| `pmd checkbox toggle <item_path> <hash>` | Toggle checkbox (supports **ID**) |
+| `pmd checkbox ls <id>` | List all checkboxes (supports **ID**, shows depth hierarchy) |
+| `pmd checkbox toggle <id> <hash>` | Toggle checkbox (supports **ID**) |
 | `pmd checkbox toggle <item_path> <hash1> <hash2> <hash3>` | Toggle multiple at once |
 
 **Multi-level support**: Checkboxes can be nested. Toggling a parent checkbox sets all children to the same state.

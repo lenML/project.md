@@ -1,5 +1,7 @@
 import path from "node:path";
-import { existsSync, readFileSync, statSync } from "node:fs";
+
+import { readFileSync, existsSync } from "node:fs";
+import type { Command } from "commander";
 
 const LINK_FILENAME = ".pmd-link";
 
@@ -14,74 +16,57 @@ export function get_bound_project(): string | null {
   }
 }
 
-/**
- * 将 "a/b/c" 拆为 { head: "a", tail: "b/c" }
- */
-export function split_first(input: string): { head: string; tail: string } {
-  const idx = input.indexOf("/");
-  if (idx === -1) return { head: input, tail: "" };
-  return { head: input.slice(0, idx), tail: input.slice(idx + 1) };
-}
-
 /** 判断字符串是否为 8 位 hex ID */
 export function is_item_id(s: string): boolean {
   return /^[0-9a-f]{8}$/.test(s);
 }
 
+
+
 /**
- * 如果当前目录有 .pmd-link 绑定，将项目名预置到路径前。
- * 如果路径以非绑定项目开头且该段为 root_dir 下的项目目录，则报错（除非 force=true）。
- * 返回完整的绝对路径。
+ * 从 commander program 或 bind 中获取 project 名。
  */
-export function prepend_bound(
-  root_dir: string,
-  path_str: string,
-  force?: boolean,
-): string {
-  const bound = get_bound_project();
-  if (!bound) return path.join(root_dir, path_str);
+export function get_project_name(program: Command): string | null {
+  return (program.getOptionValue("project") as string) || get_bound_project();
+}
 
-  // 检查路径的第一个段是否为已知项目（非绑定）
-  const first_seg = path_str.split("/")[0];
-  if (first_seg && first_seg !== bound) {
-    const candidate_path = path.join(root_dir, first_seg);
-    const is_project =
-      existsSync(candidate_path) && statSync(candidate_path).isDirectory();
-    if (is_project) {
-      if (!force) {
-        throw new Error(
-          `bound to project "${bound}", refusing "${first_seg}" (use --force to override)`,
-        );
-      }
-      // force 模式：原路径直接拼接，不 prepend
-      const result = path.join(root_dir, path_str);
-      console.log(`[proj: ${bound}] (--force) ${path_str}`);
-      return result;
-    }
-  }
+/** 验证并返回 project 目录 */
+export function require_project_dir(root_dir: string, program: Command): string {
+  const name = get_project_name(program);
+  if (!name) throw new Error("need --project <name> or project bind");
+  console.log(`[proj: ${name}]`);
+  return path.join(root_dir, name);
+}
 
-  // 避免重复绑定：如果 path_str 以 "bound/" 开头则去掉前缀
-  const prefix = bound + "/";
-  const stripped = path_str.startsWith(prefix)
-    ? path_str.slice(prefix.length)
-    : path_str;
-  const result = path.join(root_dir, bound, stripped);
-  console.log(`[proj: ${bound}] ${path_str}`);
-  return result;
+/** 验证并返回 kanban 目录 */
+export function require_kanban_dir(root_dir: string, program: Command): string {
+  const proj_dir = require_project_dir(root_dir, program);
+  const name = program.getOptionValue("kanban") as string;
+  if (!name) throw new Error("need --kanban <name>");
+  return path.join(proj_dir, name);
+}
+
+/** 验证并返回 column 目录 */
+export function require_column_dir(root_dir: string, program: Command): string {
+  const kanban_dir = require_kanban_dir(root_dir, program);
+  const name = program.getOptionValue("col") as string;
+  if (!name) throw new Error("need --col <name>");
+  return path.join(kanban_dir, name);
 }
 
 /**
- * 解析 item 路径参数。如果是 ID，尝试在所有项目中查找；否则调用 prepend_bound。
- * 找不到时返回 null。
+ * 解析 item。如果参数是 8 位 hex ID，全局查找；否则尝试按文件路径解析。
  */
-export async function resolve_item_path(
+export async function resolve_item(
   root_dir: string,
   item_arg: string,
-  force?: boolean,
 ): Promise<string | null> {
-  if (!is_item_id(item_arg)) return prepend_bound(root_dir, item_arg, force);
+  if (!is_item_id(item_arg)) {
+    const abs = path.isAbsolute(item_arg) ? item_arg : path.join(process.cwd(), item_arg);
+    return existsSync(abs) ? abs : null;
+  }
 
-  // 按 ID 查找：遍历所有项目
+  // ID 查找
   const { project_list } = await import("../core/project.js");
   const { resolve_item_by_id } = await import("../core/item.js");
   const projects = await project_list(root_dir);

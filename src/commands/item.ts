@@ -3,51 +3,51 @@ import path from "node:path";
 import { item_new, item_list, item_show } from "../core/item.js";
 import { item_move_with_check } from "../core/checklist.js";
 import { trash_item, permanent_delete, list_trash } from "../core/trash.js";
-import { resolve_item_path, prepend_bound } from "./_helpers.js";
+import { require_column_dir, require_kanban_dir, resolve_item } from "./_helpers.js";
 
 export function item_commands(program: Command): void {
   function root(): string {
     return (program.getOptionValue("dir") as string) || "";
   }
-  function force_flag(): boolean {
-    return (program.getOptionValue("force") as boolean) || false;
-  }
 
   const cmd = program.command("item").description("卡片管理");
 
   cmd
-    .command("ls <path>")
-    .description("列出卡片 (path = project/kanban/column)")
-    .action(async (path_str) => {
-      const list = await item_list(prepend_bound(root(), path_str, force_flag()));
+    .command("ls")
+    .description("列出卡片（使用 -p/--project -k/--kanban -c/--col）")
+    .action(async () => {
+      const dir = require_column_dir(root(), program);
+      const list = await item_list(dir);
       if (list.length === 0) return console.log("(empty)");
       list.forEach((i) => console.log(i.id + "  " + i.name));
     });
 
   cmd
-    .command("new <path> <name>")
-    .description("创建卡片 (path = project/kanban/column)")
+    .command("new <name>")
+    .description("创建卡片（使用 -p/--project -k/--kanban -c/--col）")
     .option("-d, --desc <desc>", "描述")
-    .action(async (path_str, name, options) => {
-      const item = await item_new(prepend_bound(root(), path_str, force_flag()), name, options.desc);
+    .action(async (name, options) => {
+      const dir = require_column_dir(root(), program);
+      const item = await item_new(dir, name, options.desc);
       console.log("created: " + item.id + " " + item.file_path);
     });
 
   cmd
-    .command("add <path> <name>")
+    .command("add <name>")
     .description("创建卡片 (new 的别名)")
     .option("-d, --desc <desc>", "描述")
-    .action(async (path_str, name, options) => {
-      const item = await item_new(prepend_bound(root(), path_str, force_flag()), name, options.desc);
+    .action(async (name, options) => {
+      const dir = require_column_dir(root(), program);
+      const item = await item_new(dir, name, options.desc);
       console.log("created: " + item.id + " " + item.file_path);
     });
 
   cmd
-    .command("show <item_path>")
-    .description("显示卡片详情 (支持 ID 或路径)")
-    .action(async (item_path_str) => {
-      const resolved = await resolve_item_path(root(), item_path_str, force_flag());
-      if (!resolved) return console.log("item not found (ID: " + item_path_str + ")");
+    .command("show <item>")
+    .description("显示卡片详情（支持 8 位 hex ID）")
+    .action(async (item_arg) => {
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) return console.log("item not found: " + item_arg);
       const detail = await item_show(resolved);
       if (detail === null) return console.log("item not found");
       const relPath = path.relative(root(), resolved);
@@ -69,17 +69,17 @@ export function item_commands(program: Command): void {
     });
 
   cmd
-    .command("mv <item_path> <dest_column>")
-    .description("移动卡片到目标列 (hooks 验证, 支持 ID)")
-    .option("--force", "跳过所有检查强制移动")
-    .action(async (item_path_str, dest_str, options) => {
-      const global_force = force_flag();
-      const resolved = await resolve_item_path(root(), item_path_str, global_force);
-      if (!resolved) { console.error("item not found (ID: " + item_path_str + ")"); process.exit(1); }
-      const dest = prepend_bound(root(), dest_str, global_force);
+    .command("mv <item>")
+    .description("移动卡片到目标列（使用 -c/--col 指定目标列，-k/--kanban 指定目标看板）")
+    .option("--force", "跳过 hooks 检查强制移动")
+    .action(async (item_arg, options) => {
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
+      // 目标列：使用 --project/--kanban/--col，其中 --project 默认来源
+      const dest = require_column_dir(root(), program);
       try {
         await item_move_with_check(resolved, dest, options.force);
-        console.log("moved to: " + dest_str);
+        console.log("moved");
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error("mv 被拒绝: " + msg);
@@ -88,11 +88,11 @@ export function item_commands(program: Command): void {
     });
 
   cmd
-    .command("rm <item_path>")
-    .description("移入回收站 (支持 ID)")
-    .action(async (item_path_str) => {
-      const resolved = await resolve_item_path(root(), item_path_str, force_flag());
-      if (!resolved) { console.error("item not found (ID: " + item_path_str + ")"); process.exit(1); }
+    .command("rm <item>")
+    .description("移入回收站（支持 8 位 hex ID）")
+    .action(async (item_arg) => {
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
       const result = await trash_item(resolved);
       console.log("trashed: " + result);
     });
@@ -100,20 +100,21 @@ export function item_commands(program: Command): void {
   const trash = cmd.command("trash").description("回收站管理");
 
   trash
-    .command("ls <kanban_path>")
-    .description("列出回收站内容 (path = project/kanban)")
-    .action(async (kanban_path_str) => {
-      const items = await list_trash(prepend_bound(root(), kanban_path_str, force_flag()));
+    .command("ls")
+    .description("列出回收站内容（使用 -p/--project -k/--kanban）")
+    .action(async () => {
+      const kanban_dir = require_kanban_dir(root(), program);
+      const items = await list_trash(kanban_dir);
       if (items.length === 0) return console.log("(empty)");
       items.forEach((p) => console.log(p));
     });
 
   trash
-    .command("purge <item_path>")
-    .description("永久删除回收站内的卡片 (支持 ID)")
-    .action(async (item_path_str) => {
-      const resolved = await resolve_item_path(root(), item_path_str, force_flag());
-      if (!resolved) { console.error("item not found (ID: " + item_path_str + ")"); process.exit(1); }
+    .command("purge <item>")
+    .description("永久删除回收站内的卡片（支持 8 位 hex ID）")
+    .action(async (item_arg) => {
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
       await permanent_delete(resolved);
       console.log("purged");
     });

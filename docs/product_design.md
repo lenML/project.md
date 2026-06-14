@@ -99,8 +99,8 @@ updated_at: 2024-01-02T15:30:00+08:00
 
 **CLI 操作**：
 
-- `pmd checkbox ls <item_path>` — 列出所有 checkbox 及 hash
-- `pmd checkbox toggle <item_path> <hash>` — 切换 hash 对应 checkbox 的完成状态
+- `pmd checkbox ls <id>` — 列出所有 checkbox 及 hash
+- `pmd checkbox toggle <id> <hash>` — 切换 hash 对应 checkbox 的完成状态
 
 **实现注意**：
 
