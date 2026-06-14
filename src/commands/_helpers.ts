@@ -1,19 +1,11 @@
 import path from "node:path";
-
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import type { Command } from "commander";
+import { get_pmdrc_value } from "../utils/pmdrc.js";
 
-const LINK_FILENAME = ".pmd-link";
-
-/** 读取当前目录绑定的项目名，无绑定返回 null */
+/** 读取当前目录绑定的项目名（从 .pmdrc 或旧 .pmd-link） */
 export function get_bound_project(): string | null {
-  const link_path = path.join(process.cwd(), LINK_FILENAME);
-  try {
-    const content = readFileSync(link_path, "utf-8").trim();
-    return content || null;
-  } catch {
-    return null;
-  }
+  return get_pmdrc_value("project");
 }
 
 /** 判断字符串是否为 8 位 hex ID */
@@ -21,13 +13,21 @@ export function is_item_id(s: string): boolean {
   return /^[0-9a-f]{8}$/.test(s);
 }
 
-
-
 /**
- * 从 commander program 或 bind 中获取 project 名。
+ * 从 commander program 或 .pmdrc 中获取 project 名。
  */
 export function get_project_name(program: Command): string | null {
   return (program.getOptionValue("project") as string) || get_bound_project();
+}
+
+/** 获取 kanban 名：先 --kanban 标志，再 .pmdrc */
+function get_kanban_name(program: Command): string | null {
+  return (program.getOptionValue("kanban") as string) || get_pmdrc_value("kanban");
+}
+
+/** 获取 col 名：先 --col 标志，再 .pmdrc */
+function get_col_name(program: Command): string | null {
+  return (program.getOptionValue("col") as string) || get_pmdrc_value("col");
 }
 
 /** 验证并返回 project 目录 */
@@ -38,19 +38,19 @@ export function require_project_dir(root_dir: string, program: Command): string 
   return path.join(root_dir, name);
 }
 
-/** 验证并返回 kanban 目录 */
+/** 验证并返回 kanban 目录（--kanban / .pmdrc kanban） */
 export function require_kanban_dir(root_dir: string, program: Command): string {
   const proj_dir = require_project_dir(root_dir, program);
-  const name = program.getOptionValue("kanban") as string;
-  if (!name) throw new Error("need --kanban <name>");
+  const name = get_kanban_name(program);
+  if (!name) throw new Error("need --kanban <name> or set kanban in .pmdrc");
   return path.join(proj_dir, name);
 }
 
-/** 验证并返回 column 目录 */
+/** 验证并返回 column 目录（--col / .pmdrc col） */
 export function require_column_dir(root_dir: string, program: Command): string {
   const kanban_dir = require_kanban_dir(root_dir, program);
-  const name = program.getOptionValue("col") as string;
-  if (!name) throw new Error("need --col <name>");
+  const name = get_col_name(program);
+  if (!name) throw new Error("need --col <name> or set col in .pmdrc");
   return path.join(kanban_dir, name);
 }
 
@@ -66,7 +66,6 @@ export async function resolve_item(
     return existsSync(abs) ? abs : null;
   }
 
-  // ID 查找
   const { project_list } = await import("../core/project.js");
   const { resolve_item_by_id } = await import("../core/item.js");
   const projects = await project_list(root_dir);

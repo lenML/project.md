@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 # event logs
 events.jsonl
 events.web.jsonl
+# pmdrc
+.pmdrc
+.pmd-link

@@ -1,5 +1,4 @@
 import path from "node:path";
-import { readFileSync } from "node:fs";
 import { ensure_dir, list_dir, try_read_file, write_file } from "../utils/fs.js";
 import { parse_yaml_frontmatter, build_frontmatter_doc } from "../utils/markdown.js";
 import { log_event } from "./event_log.js";
@@ -65,34 +64,27 @@ export async function project_context(root_dir: string, name: string): Promise<s
   return content.trim() || null;
 }
 
-const LINK_FILENAME = ".pmd-link";
+import { write_pmdrc, remove_pmdrc_key, get_pmdrc_value } from "../utils/pmdrc.js";
 
 /**
- * 绑定当前工作目录到指定项目。
+ * 绑定当前工作目录到指定项目（写入 .pmdrc project = name）。
  */
 export async function project_bind(root_dir: string, name: string): Promise<void> {
   const project_dir = path.join(root_dir, name);
   await ensure_dir(project_dir);
-  const link_path = path.join(process.cwd(), LINK_FILENAME);
-  await write_file(link_path, name + "\n");
+  write_pmdrc(process.cwd(), { project: name });
 }
 
 /**
- * 解除绑定。
+ * 解除绑定（删除 .pmdrc 中的 project 配置）。
  */
 export async function project_unbind(): Promise<void> {
-  const link_path = path.join(process.cwd(), LINK_FILENAME);
-  try { await import("node:fs/promises").then(m => m.unlink(link_path)); } catch { /* ignore */ }
+  remove_pmdrc_key(process.cwd(), "project");
 }
 
 /**
- * 获取当前目录绑定的项目名（无绑定返回 null）。
+ * 获取当前目录绑定的项目名（从 .pmdrc 或旧 .pmd-link）。
  */
 export function get_bound_project(): string | null {
-  const link_path = path.join(process.cwd(), LINK_FILENAME);
-  try {
-    return readFileSync(link_path, "utf-8").trim() || null;
-  } catch {
-    return null;
-  }
+  return get_pmdrc_value("project");
 }
