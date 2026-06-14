@@ -60,7 +60,7 @@ pmd <命令> [选项]
   project init <name>             创建项目
   project config <name>           查看项目配置
   project context <name>          查看项目 readme
-  project bind <name>             绑定当前目录到项目（创建 .pmd-link）
+  project bind <name>             绑定当前目录到项目（写入 .pmdrc project=）
   project unbind                  解除绑定
 
 看板管理:
@@ -96,7 +96,7 @@ Checkbox:
 ## Working Directory Binding
 
 ```bash
-pmd project bind my-project        # 创建 .pmd-link 绑定文件
+pmd project bind my-project        # 创建 .pmdrc 绑定文件
 cd /any/where
 pmd -k dev kanban show             # -p 自动从绑定读取
 pmd -k dev -c todo item new "Task"
@@ -113,6 +113,22 @@ pmd --force -p other-project kanban ls  # 使用 --force
 ```
 
 `project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force` 或先 `project unbind`）。
+
+## .pmdrc 配置文件
+
+`.pmdrc` 类似 npmrc，支持向上目录遍历。当前目录没有时自动向上查找：
+
+```ini
+project = my-project    # 默认项目（CLI --project 覆盖）
+kanban = dev            # 默认看板（CLI --kanban 覆盖）
+col = todo              # 默认列（CLI --col 覆盖）
+```
+
+- CLI 标志 > `.pmdrc` > 旧 `.pmd-link`（向后兼容）
+- `.pmdrc` 放在项目根目录，子目录自动继承配置
+- `project bind` 写入 `.pmdrc` 的 `project` 字段
+- `project unbind` 移除 `project` 字段，不影响其他 key
+- 设了 `kanban` 或 `col` 后可省略对应 CLI 标志
 
 ## ID Addressing
 

@@ -41,7 +41,7 @@ pmd --version         # 全局可用（npm link）
 
 ## Project Binding
 
-当前目录可通过 `pmd project bind <name>` 绑定到项目。绑定后所有路径自动带项目前缀，且阻止使用其他项目（通过 `--force` 覆盖）。
+当前目录可通过 `pmd project bind <name>` 绑定到项目（写入 `.pmdrc`）。绑定后所有路径自动带项目前缀，阻止使用其他项目（`--force` 覆盖）。`kanban`/`col` 也可写入 `.pmdrc` 作为默认值。
 
 ```bash
 cd /my/workspace

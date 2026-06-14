@@ -43,7 +43,7 @@ pmd checkbox toggle abc12345 hash1 hash2
 | `pmd init` | Initialize root directory |
 | `pmd project ls` | List all projects |
 | `pmd project init <name>` | Create a project |
-| `pmd project bind <name>` | **Bind cwd to a project** (creates `.pmd-link`, auto-prepends paths) |
+| `pmd project bind <name>` | **Bind cwd to a project** (writes `.pmdrc`, auto-prepends paths) |
 | `pmd project unbind` | Remove binding |
 
 ### Kanban Management
@@ -202,6 +202,19 @@ pmd --force kanban show other-proj/kanban
 ```
 
 绑定状态下 `project init` 也会被阻止（需 `--force` 或先 `project unbind`）。
+
+### .pmdrc 配置文件
+
+`.pmdrc` 类似 npmrc，支持向上目录遍历：
+
+```ini
+project = my-project    # 默认项目
+kanban = dev            # 默认看板
+col = todo              # 默认列
+```
+
+配置继承关系：CLI 标志 > `.pmdrc` > 旧 `.pmd-link`
+`.pmdrc` 放在项目根目录，子目录下自动继承。
 
 ### Path resolution
 Paths in `item show` output and event logs are relative to `--dir`.
