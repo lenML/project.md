@@ -53,6 +53,15 @@ export function kanban_commands(program: Command): void {
     });
 
   cmd
+    .command("cols <path>")
+    .description("列出看板下的列 (格式: project/kanban)")
+    .action(async (path_str) => {
+      const cols = await column_list(path.join(root(), path_str));
+      if (cols.length === 0) return console.log("(empty)");
+      cols.forEach((n) => console.log(n));
+    });
+
+  cmd
     .command("rm <path>")
     .description("删除看板 (格式: project/kanban)")
     .action(async (path_str) => {

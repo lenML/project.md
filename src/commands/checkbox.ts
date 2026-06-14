@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import path from "node:path";
 import { checkbox_list, checkbox_toggle } from "../core/checkbox.js";
+import { resolve_item_path } from "./_helpers.js";
 
 export function checkbox_commands(program: Command): void {
   function root(): string {
@@ -11,9 +11,11 @@ export function checkbox_commands(program: Command): void {
 
   cmd
     .command("ls <item_path>")
-    .description("列出卡片内的 checkbox")
+    .description("列出卡片内的 checkbox (支持 ID)")
     .action(async (item_path_str) => {
-      const items = await checkbox_list(path.join(root(), item_path_str));
+      const resolved = await resolve_item_path(root(), item_path_str);
+      if (!resolved) return console.log("item not found (ID: " + item_path_str + ")");
+      const items = await checkbox_list(resolved);
       if (items.length === 0) return console.log("(empty)");
       items.forEach((t) => {
         const mark = t.checked ? "[x]" : "[ ]";
@@ -24,9 +26,11 @@ export function checkbox_commands(program: Command): void {
 
   cmd
     .command("toggle <item_path> <hash...>")
-    .description("切换 checkbox 完成状态（支持多 hash: toggle path hash1 hash2 hash3）")
+    .description("切换 checkbox 完成状态（支持多 hash，支持 ID）")
     .action(async (item_path_str, hashes) => {
-      await checkbox_toggle(path.join(root(), item_path_str), ...hashes);
+      const resolved = await resolve_item_path(root(), item_path_str);
+      if (!resolved) { console.error("item not found (ID: " + item_path_str + ")"); process.exit(1); }
+      await checkbox_toggle(resolved, ...hashes);
       console.log("toggled");
     });
 }
