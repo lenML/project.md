@@ -1,13 +1,13 @@
 ---
-name: pdm-cli
-description: Guide for using the pdm (project.md) CLI tool — markdown-based kanban project manager
+name: pmd-cli
+description: Guide for using the pmd (project.md) CLI tool — markdown-based kanban project manager
 ---
 
-# pdm CLI Skill
+# pmd CLI Skill
 
 ## Overview
 
-`pdm` is a CLI tool that manages kanban projects entirely through the filesystem.
+`pmd` is a CLI tool that manages kanban projects entirely through the filesystem.
 Projects are folders, kanbans are subfolders, columns are sub-subfolders, cards are `.md` files.
 
 Root directory: `~/.project.md/` (override via `--dir <path>` or `PMD_DIR` env var).
@@ -15,7 +15,7 @@ Root directory: `~/.project.md/` (override via `--dir <path>` or `PMD_DIR` env v
 ## Quick Reference
 
 ```text
-pdm --dir <root> <command> <subcommand> <args>
+pmd --dir <root> <command> <subcommand> <args>
 ```
 
 ### Path Syntax
@@ -31,77 +31,77 @@ All paths are relative to `--dir`:
 
 **ID addressing**: Cards have an 8-char hex ID. Use it anywhere a path is needed:
 ```bash
-pdm item show abc12345           # same as pdm item show project/kanban/column/file.md
-pdm item mv abc12345 project/kanban/done
-pdm checkbox toggle abc12345 hash1 hash2
+pmd item show abc12345           # same as pmd item show project/kanban/column/file.md
+pmd item mv abc12345 project/kanban/done
+pmd checkbox toggle abc12345 hash1 hash2
 ```
 
 ### Project Management
 
 | Command | Description |
 | --- | --- |
-| `pdm init` | Initialize root directory |
-| `pdm project ls` | List all projects |
-| `pdm project init <name>` | Create a project |
-| `pdm project bind <name>` | **Bind cwd to a project** (creates `.pmd-link`, auto-prepends paths) |
-| `pdm project unbind` | Remove binding |
+| `pmd init` | Initialize root directory |
+| `pmd project ls` | List all projects |
+| `pmd project init <name>` | Create a project |
+| `pmd project bind <name>` | **Bind cwd to a project** (creates `.pmd-link`, auto-prepends paths) |
+| `pmd project unbind` | Remove binding |
 
 ### Kanban Management
 
 | Command | Description |
 | --- | --- |
-| `pdm kanban ls <project>` | List kanbans in a project |
-| `pdm kanban init <project>/<name>` | Create a kanban |
-| `pdm kanban init <project>/<name> --bp` | Create with best-practice template (idea/todo/doing/done + hooks) |
-| `pdm kanban show <project>/<name>` | **Overview**: all columns + card count + card IDs and names |
-| `pdm kanban cols <project>/<name>` | List columns in a kanban |
-| `pdm kanban rm <project>/<name>` | Delete a kanban |
+| `pmd kanban ls <project>` | List kanbans in a project |
+| `pmd kanban init <project>/<name>` | Create a kanban |
+| `pmd kanban init <project>/<name> --bp` | Create with best-practice template (idea/todo/doing/done + hooks) |
+| `pmd kanban show <project>/<name>` | **Overview**: all columns + card count + card IDs and names |
+| `pmd kanban cols <project>/<name>` | List columns in a kanban |
+| `pmd kanban rm <project>/<name>` | Delete a kanban |
 
 ### Card Management
 
 | Command | Description |
 | --- | --- |
-| `pdm item ls <path>` | List cards in a column (`path` = project/kanban/column) |
-| `pdm item new <path> <name> -d <desc>` | Create a card |
-| `pdm item show <item_path>` | Show card detail (supports **ID**) |
-| `pdm item mv <path> <dest_column_path>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
-| `pdm item rm <item_path>` | **Move to trash** (not permanent! supports **ID**) |
+| `pmd item ls <path>` | List cards in a column (`path` = project/kanban/column) |
+| `pmd item new <path> <name> -d <desc>` | Create a card |
+| `pmd item show <item_path>` | Show card detail (supports **ID**) |
+| `pmd item mv <path> <dest_column_path>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
+| `pmd item rm <item_path>` | **Move to trash** (not permanent! supports **ID**) |
 
 ### Checkbox Management
 
 | Command | Description |
 | --- | --- |
-| `pdm checkbox ls <item_path>` | List all checkboxes (supports **ID**, shows depth hierarchy) |
-| `pdm checkbox toggle <item_path> <hash>` | Toggle checkbox (supports **ID**) |
-| `pdm checkbox toggle <item_path> <hash1> <hash2> <hash3>` | Toggle multiple at once |
+| `pmd checkbox ls <item_path>` | List all checkboxes (supports **ID**, shows depth hierarchy) |
+| `pmd checkbox toggle <item_path> <hash>` | Toggle checkbox (supports **ID**) |
+| `pmd checkbox toggle <item_path> <hash1> <hash2> <hash3>` | Toggle multiple at once |
 
 **Multi-level support**: Checkboxes can be nested. Toggling a parent checkbox sets all children to the same state.
 Hash is based on text + depth, so same text at different levels has different hashes.
 
 ### Working Directory Binding
 
-When a project is bound (`pdm project bind <name>`), all path arguments are relative to that project:
+When a project is bound (`pmd project bind <name>`), all path arguments are relative to that project:
 
 ```bash
 cd /my/workspace
-pdm project bind my-app
+pmd project bind my-app
 
 # Instead of:
-pdm kanban show my-app/dev
+pmd kanban show my-app/dev
 
 # Just use:
-pdm kanban show dev          # auto-prepends "my-app/"
+pmd kanban show dev          # auto-prepends "my-app/"
 
-pdm item ls dev/todo         # = my-app/dev/todo
-pdm item new dev/todo "Task"
-pdm kanban cols dev          # list columns
+pmd item ls dev/todo         # = my-app/dev/todo
+pmd item new dev/todo "Task"
+pmd kanban cols dev          # list columns
 ```
 
 Output shows `[proj: xxx]` to indicate active binding.
 
 To override binding and work with a different project, use `--force`:
 ```bash
-pdm --force kanban show other-proj/kanban   # override binding for this command
+pmd --force kanban show other-proj/kanban   # override binding for this command
 ```
 
 **Blocked actions** when bound: `project init` (use `--force`), and any command referencing a different project.
@@ -110,34 +110,34 @@ pdm --force kanban show other-proj/kanban   # override binding for this command
 
 | Command | Description |
 | --- | --- |
-| `pdm item rm <item_path>` | Move card to trash |
-| `pdm item trash ls <kanban_path>` | List trashed items |
-| `pdm item trash purge <item_path>` | Permanently delete from trash |
+| `pmd item rm <item_path>` | Move card to trash |
+| `pmd item trash ls <kanban_path>` | List trashed items |
+| `pmd item trash purge <item_path>` | Permanently delete from trash |
 
 ### Events
 
 | Command | Description |
 | --- | --- |
-| `pdm event ls <project>` | List operation events (reverse chronological) |
-| `pdm event ls <project> --limit 5` | Limit to 5 |
-| `pdm event ls <project> --type item_move` | Filter by type |
+| `pmd event ls <project>` | List operation events (reverse chronological) |
+| `pmd event ls <project> --limit 5` | Limit to 5 |
+| `pmd event ls <project> --type item_move` | Filter by type |
 
 Event types: `project_init`, `item_create`, `item_move`, `item_trash`, `item_delete`, `checkbox_toggle`
 
 ## Agent Workflow (Best Practice)
 
 ```text
-1. Check what's available:       pdm kanban show <project>/<kanban>
-2. Read a task:                  pdm item show <id>
-3. Start working:                pdm item mv <id> <project>/<kanban>/doing
-4. Tick subtasks:                pdm checkbox toggle <id> <hash1> <hash2>
-5. Mark complete:                pdm item mv <id> <project>/<kanban>/done
+1. Check what's available:       pmd kanban show <project>/<kanban>
+2. Read a task:                  pmd item show <id>
+3. Start working:                pmd item mv <id> <project>/<kanban>/doing
+4. Tick subtasks:                pmd checkbox toggle <id> <hash1> <hash2>
+5. Mark complete:                pmd item mv <id> <project>/<kanban>/done
 ```
 
 ## Edge Cases & Tips
 
 ### ID addressing
-Card IDs are 8-char hex (e.g. `abc12345`). Use `pdm kanban show` to find IDs.
+Card IDs are 8-char hex (e.g. `abc12345`). Use `pmd kanban show` to find IDs.
 IDs are searched globally across all projects.
 
 ### Multi-level checkboxes
@@ -153,21 +153,21 @@ Toggle parent → all children set to same state.
 The `done` column has hooks that check all checkboxes must be completed.
 If a move to `done` fails with "未完成的 checkbox", toggle remaining checkboxes first:
 ```bash
-pdm checkbox toggle <item_path> <hash>
+pmd checkbox toggle <item_path> <hash>
 ```
 
 ### Event log for debugging
 ```bash
-pdm event ls <project> --limit 10
+pmd event ls <project> --limit 10
 ```
 
 ### Lock conflicts
 CLI uses `events.jsonl`. Web frontend uses `events.web.jsonl` to avoid cross-process lock conflicts.
-Both files are read by `pdm event ls` and the web UI.
+Both files are read by `pmd event ls` and the web UI.
 
 ### Best practice template
 ```bash
-pdm kanban init <project>/dev --bp
+pmd kanban init <project>/dev --bp
 ```
 Creates: `idea/` (idea parking), `todo/`, `doing/`, `done/` + default `.hooks/index.mjs`.
 The `idea` column is for capturing ideas without deadlines. Cards only become actionable when moved to `todo`/`doing`.
@@ -179,17 +179,17 @@ The `done` column has built-in hooks to validate all checkboxes.
 
 ```bash
 cd /my/workspace
-pdm project bind my-app
+pmd project bind my-app
 
 # 绑定前需写完整路径：
-#   pdm item new my-app/dev/todo "任务"
-#   pdm kanban show my-app/dev
+#   pmd item new my-app/dev/todo "任务"
+#   pmd kanban show my-app/dev
 
 # 绑定后省略项目名：
-pdm item new dev/todo "任务"
-pdm kanban show dev
-pdm kanban show              # 不指定 kanban 时显示项目所有看板概览
-pdm item ls dev/todo
+pmd item new dev/todo "任务"
+pmd kanban show dev
+pmd kanban show              # 不指定 kanban 时显示项目所有看板概览
+pmd item ls dev/todo
 ```
 
 显式写完整路径 `my-app/dev` 也支持（自动去重，不会双倍补全）。  
@@ -198,7 +198,7 @@ pdm item ls dev/todo
 **阻止跨项目**：绑定状态下访问其他项目会报错，用 `--force` 覆盖：
 
 ```bash
-pdm --force kanban show other-proj/kanban
+pmd --force kanban show other-proj/kanban
 ```
 
 绑定状态下 `project init` 也会被阻止（需 `--force` 或先 `project unbind`）。
@@ -211,30 +211,30 @@ This makes them portable across machines.
 
 ```bash
 # Init
-pdm init
-pdm project init my-app
+pmd init
+pmd project init my-app
 
 # Kanban with best-practice template
-pdm kanban init my-app/dev --bp
+pmd kanban init my-app/dev --bp
 
 # Bind working directory
 cd /my/project
-pdm project bind my-app
+pmd project bind my-app
 
 # Add tasks (paths are relative)
-pdm item new dev/todo "Add user login" -d "OAuth2 + JWT"
-pdm item new dev/todo "Write tests"
+pmd item new dev/todo "Add user login" -d "OAuth2 + JWT"
+pmd item new dev/todo "Write tests"
 
 # Start working (use IDs from kanban show)
-pdm kanban show dev            # find card IDs
-pdm item mv abc12345 dev/doing
+pmd kanban show dev            # find card IDs
+pmd item mv abc12345 dev/doing
 
 # Toggle checkboxes
-pdm checkbox toggle abc12345 hash1 hash2
+pmd checkbox toggle abc12345 hash1 hash2
 
 # Finish
-pdm item mv abc12345 dev/done
+pmd item mv abc12345 dev/done
 
 # View overview
-pdm kanban show dev
+pmd kanban show dev
 ```

@@ -99,8 +99,8 @@ updated_at: 2024-01-02T15:30:00+08:00
 
 **CLI 操作**：
 
-- `pdm checkbox ls <item_path>` — 列出所有 checkbox 及 hash
-- `pdm checkbox toggle <item_path> <hash>` — 切换 hash 对应 checkbox 的完成状态
+- `pmd checkbox ls <item_path>` — 列出所有 checkbox 及 hash
+- `pmd checkbox toggle <item_path> <hash>` — 切换 hash 对应 checkbox 的完成状态
 
 **实现注意**：
 
@@ -118,7 +118,7 @@ updated_at: 2024-01-02T15:30:00+08:00
 ### 命令树
 
 ```
-pdm
+pmd
 ├── init                               # 初始化根目录
 ├── project
 │   ├── ls                             # 列出所有 project
@@ -163,8 +163,8 @@ pdm
 
 ### 远程模式
 
-- `pdm remote add <name> <url> <api_key>` — 注册远程项目
-- `pdm remote ls` — 查看远程项目状态
+- `pmd remote add <name> <url> <api_key>` — 注册远程项目
+- `pmd remote ls` — 查看远程项目状态
 - CLI 通过 HTTP API 与远端通信，服务端读文件系统返回结果
 
 ### 排序
@@ -198,6 +198,6 @@ pdm
 3. 卡片管理：`item` CRUD + `item mv`
 4. 待办管理：`checkbox ls`、`checkbox toggle`
 5. 本地模式：仅文件夹操作，无数据库、无网络
-6. CLI 工具：pdm 可执行文件
+6. CLI 工具：pmd 可执行文件
 
 实现顺序以 CLI 功能链打通为主，UI 看板可后续迭代。

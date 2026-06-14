@@ -23,7 +23,7 @@ let col_todo: string;
 let col_done: string;
 
 beforeEach(async () => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pdm-test-"));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pmd-test-"));
   const proj_dir = await project_init(tmp_dir, "test-proj");
   kanban_dir = await kanban_init(proj_dir, "dev");
   col_todo = await column_init(kanban_dir, "todo");

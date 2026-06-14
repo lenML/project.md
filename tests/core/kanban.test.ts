@@ -11,7 +11,7 @@ let tmp_dir: string;
 let proj_dir: string;
 
 beforeEach(async () => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pdm-test-'));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pmd-test-'));
   proj_dir = await project_init(tmp_dir, 'test-proj');
 });
 

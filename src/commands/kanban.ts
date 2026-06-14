@@ -86,7 +86,7 @@ export function kanban_commands(program: Command): void {
           }
           console.log("");
         }
-        console.log("提示: 使用 pdm checkbox --help 管理子任务");
+        console.log("提示: 使用 pmd checkbox --help 管理子任务");
         return;
       }
 
@@ -100,7 +100,7 @@ export function kanban_commands(program: Command): void {
         if (items.length > 0) console.log(cards);
         console.log("");
       }
-      console.log("提示: 使用 pdm checkbox --help 管理子任务");
+      console.log("提示: 使用 pmd checkbox --help 管理子任务");
     });
 
   cmd

@@ -11,7 +11,7 @@ import { event_commands } from "./commands/event.js";
 const program = new Command();
 
 program
-  .name("pdm")
+  .name("pmd")
   .description("markdown-based project manager")
   .version("0.1.0")
   .option("--dir <path>", "项目根目录", get_default_root())

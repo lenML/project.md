@@ -4,7 +4,7 @@
   "description": "markdown-based project manager",
   "type": "module",
   "bin": {
-    "pdm": "./dist/index.js"
+    "pmd": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup",

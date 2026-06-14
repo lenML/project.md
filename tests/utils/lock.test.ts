@@ -8,7 +8,7 @@ import { FileLock, safe_update_file, atomic_write_file } from "../../src/utils/l
 let tmp_dir: string;
 
 beforeEach(() => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pdm-lock-"));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pmd-lock-"));
 });
 
 afterEach(async () => {

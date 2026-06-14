@@ -20,7 +20,7 @@ let tmp_dir: string;
 let column_dir: string;
 
 beforeEach(async () => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pdm-test-'));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pmd-test-'));
   const proj_dir = await project_init(tmp_dir, 'test-proj');
   const kanban_dir = await kanban_init(proj_dir, 'dev');
   column_dir = await column_init(kanban_dir, 'todo');

@@ -24,7 +24,7 @@
 `./temp/` 保留为本地测试环境，包含：
 
 ```
-temp/.projects/       # pdm 根目录（--dir 指向此处）
+temp/.projects/       # pmd 根目录（--dir 指向此处）
 temp/todomvc/         # TodoMVC 测试项目
 ```
 
@@ -36,19 +36,19 @@ node dist/index.js --dir ./temp/.projects <command>
 ## Global Install
 
 ```bash
-pdm --version         # 全局可用（npm link）
+pmd --version         # 全局可用（npm link）
 ```
 
 ## Project Binding
 
-当前目录可通过 `pdm project bind <name>` 绑定到项目。绑定后所有路径自动带项目前缀，且阻止使用其他项目（通过 `--force` 覆盖）。
+当前目录可通过 `pmd project bind <name>` 绑定到项目。绑定后所有路径自动带项目前缀，且阻止使用其他项目（通过 `--force` 覆盖）。
 
 ```bash
 cd /my/workspace
-pdm project bind my-app
-pdm kanban show              # 显示所有看板概览
-pdm kanban show dev/todo     # = my-app/dev/todo
-pdm --force kanban show other-proj/xxx  # 覆盖绑定
+pmd project bind my-app
+pmd kanban show              # 显示所有看板概览
+pmd kanban show dev/todo     # = my-app/dev/todo
+pmd --force kanban show other-proj/xxx  # 覆盖绑定
 ```
 
 ## Web Frontend

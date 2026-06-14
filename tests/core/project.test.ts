@@ -9,7 +9,7 @@ import { path_exists, try_read_file } from '../../src/utils/fs.js';
 let tmp_dir: string;
 
 beforeEach(() => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pdm-test-'));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), 'pmd-test-'));
 });
 
 afterEach(async () => {

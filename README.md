@@ -6,34 +6,34 @@ Markdown-based project manager. 文件夹即看板，markdown 即卡片，全文
 
 ```bash
 # 全局安装（已 link）
-pdm init                          # 初始化 ~/.project.md/
-pdm project init my-project       # 创建项目
-pdm kanban init my-project/dev    # 创建设看板
-pdm kanban init my-project/dev --bp  # 最佳实践看板（idea/todo/doing/done + hooks）
-pdm item new my-project/dev/todo "实现登录" -d "用户登录功能"
+pmd init                          # 初始化 ~/.project.md/
+pmd project init my-project       # 创建项目
+pmd kanban init my-project/dev    # 创建设看板
+pmd kanban init my-project/dev --bp  # 最佳实践看板（idea/todo/doing/done + hooks）
+pmd item new my-project/dev/todo "实现登录" -d "用户登录功能"
 
 # 查看
-pdm kanban show my-project/dev    # 看板概览（含卡片 ID）
-pdm item ls my-project/dev/todo
+pmd kanban show my-project/dev    # 看板概览（含卡片 ID）
+pmd item ls my-project/dev/todo
 
 # 通过 ID 操作卡片
-pdm item show <id>                # 8 位 hex ID，无需完整路径
-pdm item mv <id> my-project/dev/done
-pdm checkbox toggle <id> <hash>
+pmd item show <id>                # 8 位 hex ID，无需完整路径
+pmd item mv <id> my-project/dev/done
+pmd checkbox toggle <id> <hash>
 
 # checkbox
-pdm checkbox ls <item-path>       # 支持多级 checkbox，按层级缩进
-pdm checkbox toggle <item-path> <hash1> <hash2>  # toggle 父级时子级联动
+pmd checkbox ls <item-path>       # 支持多级 checkbox，按层级缩进
+pmd checkbox toggle <item-path> <hash1> <hash2>  # toggle 父级时子级联动
 
 # 工作目录绑定
 cd my-project
-pdm project bind my-project       # 绑定当前目录到项目
-pdm kanban show dev               # 路径自动补全
-pdm --force kanban ls other-project  # 覆盖绑定访问其他项目
-pdm project unbind                # 解除绑定
+pmd project bind my-project       # 绑定当前目录到项目
+pmd kanban show dev               # 路径自动补全
+pmd --force kanban ls other-project  # 覆盖绑定访问其他项目
+pmd project unbind                # 解除绑定
 
 # 事件日志
-pdm event ls my-project --limit 10
+pmd event ls my-project --limit 10
 ```
 
 ## Core Concepts
@@ -52,7 +52,7 @@ pdm event ls my-project --limit 10
 ## CLI Usage
 
 ```text
-pdm <命令> [选项]
+pmd <命令> [选项]
 
 全局选项:
   --dir <path>    项目根目录（默认 ~/.project.md/，可用 PMD_DIR 环境变量）
@@ -101,21 +101,21 @@ Checkbox:
 ## Working Directory Binding
 
 ```bash
-pdm project bind my-project        # 创建 .pmd-link 绑定文件
+pmd project bind my-project        # 创建 .pmd-link 绑定文件
 cd /any/where
-pdm kanban show dev                # 自动补全为 my-project/dev
-pdm item new dev/todo "Task"       # 自动补全路径
-pdm project unbind                 # 解除
+pmd kanban show dev                # 自动补全为 my-project/dev
+pmd item new dev/todo "Task"       # 自动补全路径
+pmd project unbind                 # 解除
 ```
 
 绑定后路径**不需要写项目前缀**，CLI 自动补全。绑定状态下访问其他项目会被拒绝：
 
 ```bash
-pdm kanban ls                    # 列出绑定项目的看板
-pdm kanban show                  # 绑定项目所有看板概览
-pdm kanban show dev              # = my-project/dev
-pdm kanban ls other-project      # Error: bound to "my-project", refusing "other-project"
-pdm --force kanban ls other-project  # 使用 --force 覆盖
+pmd kanban ls                    # 列出绑定项目的看板
+pmd kanban show                  # 绑定项目所有看板概览
+pmd kanban show dev              # = my-project/dev
+pmd kanban ls other-project      # Error: bound to "my-project", refusing "other-project"
+pmd --force kanban ls other-project  # 使用 --force 覆盖
 ```
 
 `project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force` 或先 `project unbind`）。
@@ -125,11 +125,11 @@ pdm --force kanban ls other-project  # 使用 --force 覆盖
 所有卡片创建时自动生成 8 位 hex ID。后续可通过 ID 操作：
 
 ```bash
-pdm kanban show my-project/dev     # 查看卡片 ID
-pdm item show abc12345             # 无需完整路径
-pdm item mv abc12345 my-project/dev/done
-pdm checkbox toggle abc12345 hash1 hash2
-pdm item rm abc12345
+pmd kanban show my-project/dev     # 查看卡片 ID
+pmd item show abc12345             # 无需完整路径
+pmd item mv abc12345 my-project/dev/done
+pmd checkbox toggle abc12345 hash1 hash2
+pmd item rm abc12345
 ```
 
 ID 全局唯一搜索，跨项目可用。
@@ -183,7 +183,7 @@ pnpm build        # 构建 CLI → dist/
 pnpm test         # vitest run
 pnpm lint         # ESLint
 pnpm typecheck    # tsc --noEmit
-npm link          # pdm 全局可用
+npm link          # pmd 全局可用
 ```
 
 ## Project Structure

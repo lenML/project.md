@@ -34,7 +34,7 @@ export function project_commands(program: Command): void {
       if (bound && !force_flag()) {
         console.error(`[proj: ${bound}] (bound)`);
         throw new Error(
-          `cannot init project while bound to "${bound}". Run "pdm project unbind" first, or use --force to override.`,
+          `cannot init project while bound to "${bound}". Run "pmd project unbind" first, or use --force to override.`,
         );
       }
       await project_init(root(), name);

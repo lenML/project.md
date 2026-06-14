@@ -10,7 +10,7 @@ let tmp_dir: string;
 let proj_dir: string;
 
 beforeEach(async () => {
-  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pdm-event-"));
+  tmp_dir = mkdtempSync(path.join(os.tmpdir(), "pmd-event-"));
   proj_dir = await project_init(tmp_dir, "event-test");
 });
 
