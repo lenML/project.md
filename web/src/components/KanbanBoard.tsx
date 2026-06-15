@@ -22,6 +22,7 @@ export default function KanbanBoard() {
   }
 
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [touchCard, setTouchCard] = useState<CardData | null>(null);
   const [cardPages, setCardPages] = useState<Record<string, number>>({});
   const [showTrash, setShowTrash] = useState(false);
 
@@ -33,6 +34,14 @@ export default function KanbanBoard() {
     if (colName === card.path.split("/").slice(-2, -1)[0]) return;
     moveCard(view.project, view.kanban, card, colName);
     sessionStorage.removeItem("drag-card");
+  }
+
+  function touchDrop(colName: string) {
+    if (!touchCard || !view.project || !view.kanban) return;
+    const cur = touchCard.path.split("/").slice(-2, -1)[0];
+    if (colName === cur) { setTouchCard(null); return; }
+    moveCard(view.project, view.kanban, touchCard, colName);
+    setTouchCard(null);
   }
 
   function loadMoreCards(colName: string) {
@@ -140,7 +149,8 @@ function ColumnView({
 
   return (
     <div
-      className={"flex flex-col min-w-72 max-w-72 shrink-0 rounded-lg transition-colors " + (isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : "")}
+      data-col={col.name}
+            className={"flex flex-col min-w-72 max-w-72 shrink-0 rounded-lg transition-colors " + (isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : "")}
       onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
