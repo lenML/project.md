@@ -84,14 +84,6 @@ export async function start_server(opts: ServerOptions): Promise<void> {
 
       if (parts[0] === "columns" && parts.length === 1 && method === "GET") {
         const proj = body_json.project as string || url.searchParams.get("project") || "";
-        if (!proj) { error(res, "need project"); return; }
-        const list = await kanban_list(path.join(dir, proj));
-        json(res, list);
-        return;
-      }
-
-      if (parts[0] === "columns" && parts.length === 1 && method === "GET") {
-        const proj = body_json.project as string || url.searchParams.get("project") || "";
         const kanban = body_json.kanban as string || url.searchParams.get("kanban") || "";
         if (!proj || !kanban) { error(res, "need project+kanban"); return; }
         const list = await column_list(path.join(dir, proj, kanban));
