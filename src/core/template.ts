@@ -103,6 +103,7 @@ export async function best_practice_template(kanban_dir: string): Promise<void> 
   await write_file(path.join(hooks_dir, "index.mjs"), BEST_PRACTICE_HOOKS);
   const col_desc = {
     idea: "# idea\n\n想法/点子 \u2014 临时存放想法，不要求执行。移动到其他列后才被追踪。\n",
+    backlog: "# backlog\n\n待细化 \u2014 已有初步想法，需要先拆分 checkbox 子任务才能排期。\n",
     todo: "# todo\n\n待办 \u2014 需要完成的任务，拆分到可执行的粒度。\n",
     doing: "# doing\n\n进行中 \u2014 正在做的事情，同一时间不要太多。\n",
     done: "# done\n\n完成 \u2014 已完成的卡片。移入前会自动检查所有 checkbox 是否完成。\n",
@@ -110,5 +111,4 @@ export async function best_practice_template(kanban_dir: string): Promise<void> 
   for (const [col, desc] of Object.entries(col_desc)) {
     await write_file(path.join(kanban_dir, col, "readme.md"), desc);
   }
-  await write_file(path.join(kanban_dir, "idea", ".gitkeep"), "");
 }

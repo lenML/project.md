@@ -49,7 +49,7 @@ export function kanban_commands(program: Command): void {
           return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
         }).join("\n");
         const readme = await column_read_readme(kanban_dir, col);
-        const excerpt = readme ? readme.split("\n")[0]?.replace(/^#+\s*/, "").trim() : null;
+        const excerpt = readme ? readme.split("\n").find((l) => l.trim() && !/^#+\s*$/.test(l))?.trim() || null : null;
         console.log(col + " (" + items.length + "):");
         if (excerpt) console.log("  列说明: " + excerpt);
         if (items.length > 0) console.log(cards);
@@ -106,7 +106,7 @@ export async function kanban_show_all(program: Command): Promise<void> {
         return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
       }).join("\n");
       const readme = await column_read_readme(path.join(project_dir, kb), col);
-      const excerpt = readme ? readme.split("\n")[0]?.replace(/^#+\s*/, "").trim() : null;
+      const excerpt = readme ? readme.split("\n").find((l) => l.trim() && !/^#+\s*$/.test(l))?.trim() : null;
       console.log(col + " (" + Math.min(items.length, 10) + "):");
       if (excerpt) console.log("  列说明: " + excerpt);
       if (cards.length > 0) console.log(cards);
