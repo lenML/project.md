@@ -25,6 +25,7 @@ export interface KanbanData {
 export interface ProjectData {
   name: string;
   kanbans: KanbanData[];
+  readme?: string;
 }
 
 export interface EventRecord {

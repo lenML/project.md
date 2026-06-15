@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import KanbanBoard from "./components/KanbanBoard";
 import EventLog from "./components/EventLog";
 import CardDetail from "./components/CardDetail";
+import ProjectReadme from "./components/ProjectReadme";
 import { FolderOpen, Loader2, Lock, Unlock } from "lucide-react";
 
 export default function App() {
@@ -68,6 +69,8 @@ export default function App() {
             )}
             {view.kanban ? (
               <KanbanBoard />
+            ) : view.project ? (
+              <ProjectReadme />
             ) : (
               <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
                 从左侧选择一个看板

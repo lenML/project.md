@@ -33,8 +33,9 @@ async function loadProjectData(root: FileSystemDirectoryHandle): Promise<Project
   const entries = await readDir(root);
   for (const entry of entries) {
     if (!entry.isDir) continue;
-    const readme = await tryGetFile(entry.handle as FileSystemDirectoryHandle, "readme.md");
-    if (!readme) continue;
+    const readmeHandle = await tryGetFile(entry.handle as FileSystemDirectoryHandle, "readme.md");
+    if (!readmeHandle) continue;
+    const readmeContent = await readTextFile(readmeHandle);
     const kanbans: KanbanData[] = [];
     const kanbanEntries = await readDir(entry.handle as FileSystemDirectoryHandle);
     for (const k of kanbanEntries) {
@@ -62,7 +63,7 @@ async function loadProjectData(root: FileSystemDirectoryHandle): Promise<Project
       }
       kanbans.push({ name: k.name, columns });
     }
-    projects.push({ name: entry.name, kanbans });
+    projects.push({ name: entry.name, kanbans, readme: readmeContent });
   }
   return projects;
 }
