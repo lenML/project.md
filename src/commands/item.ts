@@ -128,4 +128,50 @@ export function item_commands(program: Command): void {
       await permanent_delete(resolved);
       console.log("purged");
     });
+
+  const dep = cmd.command("depends").description("依赖关系管理");
+
+  dep
+    .command("ls <item>")
+    .description("查看依赖列表")
+    .action(async (item_arg) => {
+      const { read_dep_ids } = await import("../core/deps.js");
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
+      const ids = await read_dep_ids(resolved);
+      if (ids.length === 0) return console.log("(no dependencies)");
+      // 解析名称
+      for (const id of ids) {
+        const fp = await resolve_item(root(), id);
+        if (fp) {
+          const { item_show } = await import("../core/item.js");
+          const detail = await item_show(fp);
+          console.log(id + "  " + (detail?.metadata.name as string || fp));
+        } else {
+          console.log(id + "  (not found)");
+        }
+      }
+    });
+
+  dep
+    .command("add <item> <target>")
+    .description("添加依赖")
+    .action(async (item_arg, target_arg) => {
+      const { add_dependency } = await import("../core/deps.js");
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
+      await add_dependency(resolved, target_arg, (id) => resolve_item(root(), id));
+      console.log("dep added");
+    });
+
+  dep
+    .command("remove <item> <target>")
+    .description("移除依赖")
+    .action(async (item_arg, target_arg) => {
+      const { remove_dependency } = await import("../core/deps.js");
+      const resolved = await resolve_item(root(), item_arg);
+      if (!resolved) { console.error("item not found: " + item_arg); process.exit(1); }
+      await remove_dependency(resolved, target_arg);
+      console.log("dep removed");
+    });
 }
