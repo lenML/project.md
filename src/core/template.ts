@@ -15,9 +15,20 @@ import { readFileSync } from "node:fs";
 
 /**
  * 卡片移动到目标列之前。
- * 移动到 done 时自动校验所有 checkbox 是否勾选。
+ * backlog->todo: 必须有 checkbox 子任务
+ * 移动到 done: 所有 checkbox 必须完成
  */
 export function before_item_move(ctx) {
+  // 从 backlog 移入 todo 前必须细化 checkbox
+  if (ctx.src_column === "backlog" && ctx.dest_column === "todo" && ctx.item_path) {
+    try {
+      const content = readFileSync(ctx.item_path, "utf-8");
+      const hasCb = /^- \[ |x\] /m.test(content);
+      if (!hasCb) {
+        return { ok: false, message: "backlog 卡片移入 todo 前需细化 checkbox 子任务" };
+      }
+    } catch { /* 放行 */ }
+  }
   if (ctx.dest_column === "done" && ctx.item_path) {
     try {
       const content = readFileSync(ctx.item_path, "utf-8");
@@ -84,7 +95,7 @@ export async function after_checkbox_toggle(ctx) {
  * 应用最佳实践模板：创建标准列和 hooks。
  */
 export async function best_practice_template(kanban_dir: string): Promise<void> {
-  for (const col of ["idea", "todo", "doing", "done"]) {
+  for (const col of ["idea", "backlog", "todo", "doing", "done"]) {
     await column_init(kanban_dir, col);
   }
   const hooks_dir = path.join(kanban_dir, ".hooks");

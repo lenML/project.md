@@ -38,7 +38,8 @@ export async function item_move_with_check(
 ): Promise<string> {
   const kanban_dir = get_kanban_dir(dest_column_dir);
   const col_name = dest_column_dir.split(/[/\\]/).pop() || "";
-  const ctx = { item_path, dest_column: col_name };
+  const src_col = item_path.split(/[/\\]/).slice(-2, -1)[0] || "";
+  const ctx = { item_path, dest_column: col_name, src_column: src_col };
 
   if (!force) {
     // 1. 自定义 hook
