@@ -53,15 +53,23 @@ pmd checkbox toggle abc12345 hash1 hash2
 | `pmd kanban ls` | List kanbans (use -p/--project) |
 | `pmd kanban init <name>` | Create a kanban (use -p/--project) |
 | `pmd kanban init <name> --bp` | Create with best-practice template (use -p/--project) |
-| `pmd kanban show` | Kanban overview (use -p/--project -k/--kanban) |
+| `pmd kanban show` | Kanban overview (use -p/--project -k/--kanban, --all 显示全部，默认限 10 条+时间戳+列 readme 摘录) |
 | `pmd kanban cols` | List columns (use -p/--project -k/--kanban) |
 | `pmd kanban rm <name>` | Delete a kanban (use -p/--project) |
+
+### Column Management
+
+| Command | Description |
+| --- | --- |
+| `pmd column ls` | List columns (use -p/--project -k/--kanban) |
+| `pmd column init <name>` | Create a column (use -p/--project -k/--kanban) |
+| `pmd column readme <name>` | Show column readme (use -p/--project -k/--kanban) |
 
 ### Card Management
 
 | Command | Description |
 | --- | --- |
-| `pmd item ls` | List cards (use -p/--project -k/--kanban -c/--col) |
+| `pmd item ls` | List cards (use -p/--project -k/--kanban -c/--col, --limit N 限条数，显示 created_at) |
 | `pmd item new <name> [-d <desc>]` | Create a card (use -p -k -c) |
 | `pmd item add <name>` | Create card (new 的别名) |
 | `pmd item import <file>` | 从 markdown 文件导入卡片（自动合并/添加 frontmatter） |

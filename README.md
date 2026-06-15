@@ -66,16 +66,17 @@ pmd <命令> [选项]
 看板管理:
   kanban ls                       列出看板（使用 -p/--project）
   kanban init <name>              创建看板（使用 -p/--project，--bp）
-  kanban show [project/]<name>   看板概览（绑定后可省略路径，显示所有看板）
+  kanban show                    看板概览（使用 -p -k，--all 显示全部，默认限 10 条）
   kanban cols                     列出看板下的列（使用 -p/--project -k/--kanban）
   kanban rm <name>                删除看板（使用 -p/--project）
 
 列管理:
   column ls                       列出列（使用 -p/--project -k/--kanban）
   column init <name>              创建列（使用 -p/--project -k/--kanban）
+  column readme <name>            查看列 readme（使用 -p/--project -k/--kanban）
 
 卡片管理:
-  item ls                         列出卡片（使用 -p -k -c）
+  item ls                         列出卡片（使用 -p -k -c，--limit N 限条数）
   item new <name> [-d desc]       创建卡片（使用 -p -k -c）
   item show <id>                  查看卡片详情（支持 8 位 hex ID）
   item mv <id>                    移动卡片（使用 -c 指定目标列）
