@@ -27,6 +27,7 @@ export interface ItemSummary {
   name: string;
   id: string;
   file_path: string;
+  created_at?: string;
 }
 
 export interface ItemDetail {
@@ -108,7 +109,8 @@ export async function item_list(dir_path: string): Promise<ItemSummary[]> {
     if (parsed === null) continue;
     const id = (parsed.metadata.id as string) || "";
     const name = (parsed.metadata.name as string) || entry.name.replace(/\.md$/, "");
-    items.push({ name, id, file_path });
+    const created_at = (parsed.metadata.created_at as string) || "";
+    items.push({ name, id, file_path, created_at });
   }
   return items;
 }

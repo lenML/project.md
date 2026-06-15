@@ -15,11 +15,16 @@ export function item_commands(program: Command): void {
   cmd
     .command("ls")
     .description("列出卡片（使用 -p/--project -k/--kanban -c/--col）")
-    .action(async () => {
+    .option("-l, --limit <number>", "限制条数")
+    .action(async (options) => {
       const dir = require_column_dir(root(), program);
-      const list = await item_list(dir);
+      let list = await item_list(dir);
+      if (options.limit) list = list.slice(0, parseInt(options.limit, 10));
       if (list.length === 0) return console.log("(empty)");
-      list.forEach((i) => console.log(i.id + "  " + i.name));
+      for (const i of list) {
+        const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+        console.log(i.id + "  " + i.name + (ts ? "  (" + ts + ")" : ""));
+      }
     });
 
   cmd

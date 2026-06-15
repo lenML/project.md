@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import path from "node:path";
 import { kanban_init, kanban_list, kanban_remove } from "../core/kanban.js";
-import { column_list } from "../core/column.js";
+import { column_list, column_read_readme } from "../core/column.js";
 import { item_list } from "../core/item.js";
 import { require_project_dir, require_kanban_dir } from "./_helpers.js";
 
@@ -35,14 +35,23 @@ export function kanban_commands(program: Command): void {
   cmd
     .command("show")
     .description("看板概览（使用 -p/--project -k/--kanban）")
-    .action(async () => {
+    .option("--all", "显示所有卡片（不限制条数）")
+    .action(async (options) => {
       const kanban_dir = require_kanban_dir(root(), program);
       const cols = await column_list(kanban_dir);
       if (cols.length === 0) return console.log("(empty kanban)");
       for (const col of cols) {
-        const items = await item_list(path.join(kanban_dir, col));
-        const cards = items.map((i) => "  " + i.id + "  " + i.name).join("\n");
+        let items = await item_list(path.join(kanban_dir, col));
+        items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+        if (!options.all) items = items.slice(0, 10);
+        const cards = items.map((i) => {
+          const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+          return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
+        }).join("\n");
+        const readme = await column_read_readme(kanban_dir, col);
+        const excerpt = readme ? readme.split("\n")[0]?.replace(/^#+\s*/, "").trim() : null;
         console.log(col + " (" + items.length + "):");
+        if (excerpt) console.log("  列说明: " + excerpt);
         if (items.length > 0) console.log(cards);
         console.log("");
       }
@@ -75,6 +84,7 @@ export function kanban_commands(program: Command): void {
  */
 export async function kanban_show_all(program: Command): Promise<void> {
   const { get_project_name } = await import("./_helpers.js");
+  const { column_read_readme } = await import("../core/column.js");
   const dir_root = (program.getOptionValue("dir") as string) || "";
   const name = get_project_name(program);
   if (!name) {
@@ -90,9 +100,16 @@ export async function kanban_show_all(program: Command): Promise<void> {
     const cols = await column_list(path.join(project_dir, kb));
     for (const col of cols) {
       const items = await item_list(path.join(project_dir, kb, col));
-      const cards = items.map((i) => "  " + i.id + "  " + i.name).join("\n");
-      console.log(col + " (" + items.length + "):");
-      if (items.length > 0) console.log(cards);
+      items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      const cards = items.slice(0, 10).map((i) => {
+        const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+        return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
+      }).join("\n");
+      const readme = await column_read_readme(path.join(project_dir, kb), col);
+      const excerpt = readme ? readme.split("\n")[0]?.replace(/^#+\s*/, "").trim() : null;
+      console.log(col + " (" + Math.min(items.length, 10) + "):");
+      if (excerpt) console.log("  列说明: " + excerpt);
+      if (cards.length > 0) console.log(cards);
     }
     console.log("");
   }
