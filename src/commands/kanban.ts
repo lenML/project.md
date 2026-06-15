@@ -4,6 +4,7 @@ import { kanban_init, kanban_list, kanban_remove } from "../core/kanban.js";
 import { column_list, column_read_readme } from "../core/column.js";
 import { item_list } from "../core/item.js";
 import { require_project_dir, require_kanban_dir } from "./_helpers.js";
+import { format_relative_time } from "../utils/fs.js";
 
 export function kanban_commands(program: Command): void {
   function root(): string {
@@ -45,11 +46,11 @@ export function kanban_commands(program: Command): void {
         items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
         if (!options.all) items = items.slice(0, 10);
         const cards = items.map((i) => {
-          const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+          const ts = i.created_at ? format_relative_time(i.created_at) : "";
           return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
         }).join("\n");
         const readme = await column_read_readme(kanban_dir, col);
-        const excerpt = readme ? readme.split("\n").find((l) => l.trim() && !/^#+\s*$/.test(l))?.trim() || null : null;
+        const excerpt = readme ? readme.split("\n").find((l) => l.trim() && !/^\s*#/.test(l))?.trim() || null : null;
         console.log(col + " (" + items.length + "):");
         if (excerpt) console.log("  列说明: " + excerpt);
         if (items.length > 0) console.log(cards);
@@ -102,7 +103,7 @@ export async function kanban_show_all(program: Command): Promise<void> {
       const items = await item_list(path.join(project_dir, kb, col));
       items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
       const cards = items.slice(0, 10).map((i) => {
-        const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+        const ts = i.created_at ? format_relative_time(i.created_at) : "";
         return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
       }).join("\n");
       const readme = await column_read_readme(path.join(project_dir, kb), col);

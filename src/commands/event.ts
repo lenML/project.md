@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { list_events, type EventType } from "../core/event_log.js";
 import { require_project_dir } from "./_helpers.js";
+import { format_relative_time } from "../utils/fs.js";
 
 export function event_commands(program: Command): void {
   function root(): string {
@@ -31,7 +32,7 @@ export function event_commands(program: Command): void {
         return;
       }
       for (const e of events) {
-        const ts = new Date(e.timestamp).toLocaleString("zh-CN");
+        const ts = format_relative_time(e.timestamp);
         const detail = e.type === "item_move" && e.meta?.from && e.meta?.to
           ? `  (${e.meta.from as string} → ${e.meta.to as string})`
           : "";

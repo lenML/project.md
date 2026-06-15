@@ -69,3 +69,23 @@ export function dir_name(file_path: string): string {
 export function join_path(...parts: string[]): string {
   return path.join(...parts);
 }
+
+const RELATIVE_UNITS: [string, number][] = [
+  ["秒", 60],
+  ["分钟", 60],
+  ["小时", 24],
+  ["天", 30],
+  ["月", 12],
+];
+
+export function format_relative_time(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 0) return "刚刚";
+  let seconds = Math.floor(diff / 1000);
+  if (seconds < 10) return "刚刚";
+  for (const [unit, divisor] of RELATIVE_UNITS) {
+    if (seconds < divisor) return seconds + unit + "前";
+    seconds = Math.floor(seconds / divisor);
+  }
+  return seconds + "年前";
+}

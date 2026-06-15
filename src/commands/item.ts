@@ -4,6 +4,7 @@ import { item_new, item_list, item_show, item_import } from "../core/item.js";
 import { item_move_with_check } from "../core/checklist.js";
 import { trash_item, permanent_delete, list_trash } from "../core/trash.js";
 import { require_column_dir, require_kanban_dir, resolve_item } from "./_helpers.js";
+import { format_relative_time } from "../utils/fs.js";
 
 export function item_commands(program: Command): void {
   function root(): string {
@@ -22,7 +23,7 @@ export function item_commands(program: Command): void {
       if (options.limit) list = list.slice(0, parseInt(options.limit, 10));
       if (list.length === 0) return console.log("(empty)");
       for (const i of list) {
-        const ts = i.created_at ? new Date(i.created_at).toLocaleString("zh-CN") : "";
+        const ts = i.created_at ? format_relative_time(i.created_at) : "";
         console.log(i.id + "  " + i.name + (ts ? "  (" + ts + ")" : ""));
       }
     });
