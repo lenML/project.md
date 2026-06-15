@@ -94,7 +94,7 @@ function ColumnView({
   col, onCardClick, onDrop, onDragOver, onDragLeave, isDragOver,
   writeMode, projectName, kanbanName, cardPage, pageSize, onLoadMore,
 }: {
-  col: { name: string; cards: CardData[] };
+  col: { name: string; cards: CardData[]; readme?: string };
   onCardClick: (c: CardData) => void;
   onDrop: () => void;
   onDragOver: () => void;
@@ -125,6 +125,8 @@ function ColumnView({
   const visibleCards = col.cards.slice(0, cardPage * pageSize);
   const totalCards = col.cards.length;
   const remaining = totalCards - visibleCards.length;
+  const totalCbs = col.cards.reduce((s, c) => s + c.checkboxes.length, 0);
+  const doneCbs = col.cards.reduce((s, c) => s + c.checkboxes.filter((x) => x.checked).length, 0);
 
   return (
     <div
@@ -134,9 +136,17 @@ function ColumnView({
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
     >
       <div className="col-header flex items-center gap-2 px-2 pt-2">
-        <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{col.cards.length}</span>
-        {col.name}
-      </div>
+          <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{col.cards.length}</span>
+          <span className="text-xs text-slate-500">{col.name}</span>
+          {totalCbs > 0 && (
+            <span className="text-xs text-slate-600 ml-auto">{doneCbs}/{totalCbs}</span>
+          )}
+        </div>
+        {col.readme && (
+          <div className="px-2 pt-1">
+            <div className="text-xs text-slate-500 italic leading-relaxed line-clamp-3">{col.readme.replace(/^#+/gm, "").trim()}</div>
+          </div>
+        )}
       <div className="flex flex-col gap-2 p-2 min-h-24">
         {visibleCards.length === 0 && !showNew && (
           <div className="text-xs text-slate-600 text-center py-6">空</div>

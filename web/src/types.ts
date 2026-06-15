@@ -15,6 +15,7 @@ export interface CardData {
 export interface ColumnData {
   name: string;
   cards: CardData[];
+  readme?: string;
 }
 
 export interface KanbanData {
