@@ -1,6 +1,7 @@
 import { useStore } from "../stores/useStore";
 import type { CardData } from "../types";
-import { CheckSquare2, Square, Plus, Search, X } from "lucide-react";
+import { CheckSquare2, Square, Plus, Search, X, Trash2 } from "lucide-react";
+import TrashPanel from "./TrashPanel";
 import { useState, useMemo, useRef } from "react";
 
 export default function KanbanBoard() {
@@ -11,6 +12,7 @@ export default function KanbanBoard() {
   const writeMode = useStore((s) => s.writeMode);
   const searchQuery = useStore((s) => s.searchQuery);
   const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const loadTrash = useStore((s) => s.loadTrash);
   const CARD_PAGE_SIZE = useStore((s) => s.CARD_PAGE_SIZE);
   const project = projects.find((p) => p.name === view.project);
   const kanban = project?.kanbans.find((k) => k.name === view.kanban);
@@ -21,6 +23,7 @@ export default function KanbanBoard() {
 
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [cardPages, setCardPages] = useState<Record<string, number>>({});
+  const [showTrash, setShowTrash] = useState(false);
 
   function onDrop(colName: string) {
     const cardJson = sessionStorage.getItem("drag-card");
@@ -65,6 +68,12 @@ export default function KanbanBoard() {
               <X size={14} />
             </button>
           )}
+          <button onClick={() => { loadTrash(view.project!, view.kanban!); setShowTrash(true); }}
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0"
+            title="回收站"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       )}
       <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
@@ -86,6 +95,7 @@ export default function KanbanBoard() {
           />
         ))}
       </div>
+      {showTrash && <TrashPanel onClose={() => setShowTrash(false)} />}
     </div>
   );
 }

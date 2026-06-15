@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import {
-  readDir, readTextFile, tryGetDir, tryGetFile,
+  readDir, readTextFile, tryGetDir, tryGetFile, listDirAll,
   pickDirectory, writeTextFile, createFile, createDir, removeEntry,
 } from "../utils/fs";
 import { parseFrontmatter, parseCheckboxes, buildFrontmatterDoc, toggleCheckboxByHash } from "../utils/markdown";
@@ -118,6 +118,10 @@ interface AppStore {
   moveCard: (proj: string, kanban: string, card: CardData, destCol: string) => Promise<void>;
   updateCard: (proj: string, kanban: string, card: CardData, meta: Record<string, unknown>, body: string) => Promise<void>;
   toggleCheckbox: (hash: string) => Promise<void>;
+  trashItems: Array<{ name: string; path: string; originalName: string }>;
+  loadTrash: (proj: string, kanban: string) => Promise<void>;
+  restoreFromTrash: (proj: string, kanban: string, col: string, trashPath: string) => Promise<void>;
+  purgeFromTrash: (trashPath: string) => Promise<void>;
   updateReadme: (proj: string, content: string) => Promise<void>;
 }
 
@@ -126,6 +130,7 @@ export const useStore = create<AppStore>((set, get) => ({
   rootHandle: null,
   projects: [],
   events: [],
+  trashItems: [],
   view: { project: null, kanban: null, card: null, logOpen: false },
   loading: false,
   writeMode: false,
@@ -325,6 +330,87 @@ export const useStore = create<AppStore>((set, get) => ({
       await writeTextFile(readme, content);
       await logWebEvent(rootHandle, proj, "project_update", "更新 readme: " + proj);
       await get().loadAll();
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  loadTrash: async (proj, kanban) => {
+    const { rootHandle } = get();
+    if (!rootHandle) return;
+    try {
+      const projDir = await tryGetDir(rootHandle, proj);
+      if (!projDir) return;
+      const kanbanDir = await tryGetDir(projDir, kanban);
+      if (!kanbanDir) return;
+      const trashDir = await tryGetDir(kanbanDir, ".trash");
+      if (!trashDir) { set({ trashItems: [] }); return; }
+      const entries = await listDirAll(trashDir);
+      const items: Array<{ name: string; path: string; originalName: string }> = [];
+      for (const e of entries) {
+        if (!e.isDir && e.name.endsWith(".md") && e.name !== "readme.md") {
+          const base = e.name.replace(/.w+.md$/, "").replace(/.md$/, "");
+          const fileParts = e.name.split(".");
+          const originalName = fileParts.length > 2 ? fileParts.slice(0, -2).join(".") : base;
+          items.push({ name: originalName, path: [proj, kanban, ".trash", e.name].join("/"), originalName });
+        }
+      }
+      set({ trashItems: items });
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  restoreFromTrash: async (proj, kanban, col, trashPath) => {
+    const { rootHandle } = get();
+    if (!rootHandle) return;
+    try {
+      const parts = trashPath.split("/");
+      const fileName = parts[parts.length - 1];
+      const projDir = await tryGetDir(rootHandle, proj);
+      if (!projDir) return;
+      const kanbanDir = await tryGetDir(projDir, kanban);
+      if (!kanbanDir) return;
+      const colDir = await tryGetDir(kanbanDir, col);
+      if (!colDir) return;
+      let trashDir: FileSystemDirectoryHandle = rootHandle;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const next = await tryGetDir(trashDir, parts[i]);
+        if (!next) return;
+        trashDir = next;
+      }
+      const file = await tryGetFile(trashDir, fileName);
+      if (!file) return;
+      const content = await readTextFile(file);
+      const cleanName = fileName.replace(/.w+.md$/, ".md");
+      const destFile = await createFile(colDir, cleanName);
+      await writeTextFile(destFile, content);
+      await removeEntry(trashDir, fileName);
+      await logWebEvent(rootHandle, proj, "item_create", "恢复卡片: " + cleanName);
+      await get().loadTrash(proj, kanban);
+      await get().loadAll();
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  purgeFromTrash: async (trashPath) => {
+    const { rootHandle } = get();
+    if (!rootHandle) return;
+    try {
+      const parts = trashPath.split("/");
+      const fileName = parts[parts.length - 1];
+      let dir: FileSystemDirectoryHandle = rootHandle;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const next = await tryGetDir(dir, parts[i]);
+        if (!next) return;
+        dir = next;
+      }
+      await removeEntry(dir, fileName);
+      const proj = parts[0];
+      const kanban = parts[1];
+      await logWebEvent(rootHandle, proj, "item_delete", "永久删除: " + fileName);
+      await get().loadTrash(proj, kanban);
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
     }
