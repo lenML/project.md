@@ -62,10 +62,12 @@ pmd checkbox toggle abc12345 hash1 hash2
 | Command | Description |
 | --- | --- |
 | `pmd item ls` | List cards (use -p/--project -k/--kanban -c/--col) |
-| `pmd item new <path> <name> -d <desc>` | Create a card |
+| `pmd item new <name> [-d <desc>]` | Create a card (use -p -k -c) |
+| `pmd item add <name>` | Create card (new 的别名) |
+| `pmd item import <file>` | 从 markdown 文件导入卡片（自动合并/添加 frontmatter） |
 | `pmd item show <id>` | Show card detail (supports **ID**) |
-| `pmd item mv <path> <dest_column_path>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
-| `pmd item rm <item_path>` | **Move to trash** (not permanent! supports **ID**) |
+| `pmd item mv <id> -c <col>` | Move card (triggers hooks + done-column checkbox validation, supports **ID**) |
+| `pmd item rm <id>` | **Move to trash** (not permanent! supports **ID**) |
 
 ### Checkbox Management
 
