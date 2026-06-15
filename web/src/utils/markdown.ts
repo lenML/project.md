@@ -36,6 +36,57 @@ export interface CheckboxItem {
   text: string;
   checked: boolean;
   hash: string;
+  depth: number;
+}
+
+/**
+ * 在 markdown 正文中切换指定 hash 的 checkbox 状态。
+ * 返回切换后的内容，若 hash 未找到返回 null。
+ * 父级 toggle 时联动子级。
+ */
+export function toggleCheckboxByHash(content: string, hash: string): string | null {
+  const lines = content.split("\n");
+  let targetIdx = -1;
+  let targetChecked = false;
+  let targetDepth = 0;
+
+  // 找 hash 匹配的行
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const m = line.match(/^(\s*)[-*]\s\[( |x|X)\]\s(.+)$/);
+    if (m) {
+      const text = m[3].trim();
+      const depth = Math.floor(m[1].length / 2);
+      if (shortHash(text) === hash) {
+        targetIdx = i;
+        targetChecked = m[2] === "x" || m[2] === "X";
+        targetDepth = depth;
+        break;
+      }
+    }
+  }
+  if (targetIdx === -1) return null;
+
+  const newState = targetChecked ? " " : "x";
+
+  // 切换父级
+  lines[targetIdx] = lines[targetIdx].replace(/\[( |x|X)\]/, `[${newState}]`);
+
+  // 联动子级（缩进更大的行跟随父级状态）
+  for (let i = targetIdx + 1; i < lines.length; i++) {
+    const line = lines[i];
+    const m = line.match(/^(\s*)[-*]\s\[( |x|X)\]\s(.+)$/);
+    if (m) {
+      const depth = Math.floor(m[1].length / 2);
+      if (depth > targetDepth) {
+        lines[i] = line.replace(/\[( |x|X)\]/, `[${newState}]`);
+      } else {
+        break; // 回到同级或更高级，停止
+      }
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export function buildFrontmatterDoc(metadata: Record<string, unknown>, body: string): string {
@@ -47,10 +98,11 @@ export function parseCheckboxes(content: string): CheckboxItem[] {
   const items: CheckboxItem[] = [];
   const lines = content.split("\n");
   for (const line of lines) {
-    const m = line.match(/^\s*[-*]\s\[( |x|X)\]\s(.+)$/);
+    const m = line.match(/^(\s*)[-*]\s\[( |x|X)\]\s(.+)$/);
     if (m) {
-      const text = m[2].trim();
-      items.push({ text, checked: m[1] === "x" || m[1] === "X", hash: shortHash(text) });
+      const text = m[3].trim();
+      const depth = Math.floor(m[1].length / 2);
+      items.push({ text, checked: m[2] === "x" || m[2] === "X", hash: shortHash(text), depth });
     }
   }
   return items;

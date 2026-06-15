@@ -3,7 +3,7 @@ import {
   readDir, readTextFile, tryGetDir, tryGetFile,
   pickDirectory, writeTextFile, createFile, createDir, removeEntry,
 } from "../utils/fs";
-import { parseFrontmatter, parseCheckboxes, buildFrontmatterDoc } from "../utils/markdown";
+import { parseFrontmatter, parseCheckboxes, buildFrontmatterDoc, toggleCheckboxByHash } from "../utils/markdown";
 import type { ProjectData, KanbanData, ColumnData, CardData, EventRecord, ViewState } from "../types";
 
 function shortHash(text: string): string {
@@ -114,7 +114,7 @@ interface AppStore {
   deleteCard: (proj: string, kanban: string, card: CardData) => Promise<void>;
   moveCard: (proj: string, kanban: string, card: CardData, destCol: string) => Promise<void>;
   updateCard: (proj: string, kanban: string, card: CardData, meta: Record<string, unknown>, body: string) => Promise<void>;
-  toggleCheckbox: (card: CardData) => Promise<void>;
+  toggleCheckbox: (hash: string) => Promise<void>;
   updateReadme: (proj: string, content: string) => Promise<void>;
 }
 
@@ -280,13 +280,36 @@ export const useStore = create<AppStore>((set, get) => ({
     }
   },
 
-  toggleCheckbox: async (card) => {
-    const { rootHandle } = get();
-    if (!rootHandle) return;
+  toggleCheckbox: async (hash: string) => {
+    const { rootHandle, view } = get();
+    const card = view.card;
+    if (!rootHandle || !card) return;
     try {
-      await logWebEvent(rootHandle, (card.path.split("/")[0]), "checkbox_toggle", "切换 checkbox: " + card.name);
+      const parts = card.path.split("/");
+      let dir: FileSystemDirectoryHandle = rootHandle;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const next = await tryGetDir(dir, parts[i]);
+        if (!next) return;
+        dir = next;
+      }
+      const file = await tryGetFile(dir, parts[parts.length - 1]);
+      if (!file) return;
+      const content = await readTextFile(file);
+
+      // parse frontmatter + body, toggle in body
+      const parsed = parseFrontmatter(content);
+      if (!parsed) return;
+      const newBody = toggleCheckboxByHash(parsed.body, hash);
+      if (newBody === null) return;
+      const newContent = buildFrontmatterDoc(parsed.metadata, newBody);
+      await writeTextFile(file, newContent);
+
+      const projName = card.path.split("/")[0];
+      await logWebEvent(rootHandle, projName, "checkbox_toggle", "切换 checkbox: " + card.name);
       await get().loadAll();
-    } catch { /* skip */ }
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
   },
 
   updateReadme: async (proj, content) => {

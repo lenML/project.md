@@ -11,6 +11,7 @@ export default function CardDetail() {
   const writeMode = useStore((s) => s.writeMode);
   const updateCard = useStore((s) => s.updateCard);
   const deleteCard = useStore((s) => s.deleteCard);
+  const toggleCheckbox = useStore((s) => s.toggleCheckbox);
   const events = useStore((s) => s.events);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
@@ -83,7 +84,14 @@ export default function CardDetail() {
                   <div className="space-y-1">
                     {c.checkboxes.map((cb) => (
                       <div key={cb.hash} className="flex items-center gap-2 text-sm">
-                        {cb.checked ? <CheckSquare2 size={16} className="text-green-400 shrink-0" /> : <Square size={16} className="text-slate-500 shrink-0" />}
+                        <button
+                          onClick={() => toggleCheckbox(cb.hash)}
+                          className={"shrink-0 transition-colors " + (writeMode ? "cursor-pointer hover:opacity-80" : "cursor-default")}
+                          title={writeMode ? "切换" : "只读模式"}
+                          disabled={!writeMode}
+                        >
+                          {cb.checked ? <CheckSquare2 size={16} className="text-green-400" /> : <Square size={16} className="text-slate-500" />}
+                        </button>
                         <span className={cb.checked ? "text-slate-400 line-through" : "text-slate-200"}>{cb.text}</span>
                         <span className="text-xs text-slate-600 font-mono">#{cb.hash}</span>
                       </div>
