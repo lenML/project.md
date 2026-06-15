@@ -114,6 +114,20 @@ pmd --force -p other-project kanban ls  # 使用 --force
 
 `project ls` 中绑定项目会标记 `*`。`project init` 在绑定状态下也会被阻止（需 `--force` 或先 `project unbind`）。
 
+## PMD_DIR 环境变量
+
+设置 `PMD_DIR` 可改变默认根目录，优先级低于 `--dir`：
+
+```bash
+export PMD_DIR=/path/to/projects   # Linux/macOS
+```
+
+```powershell
+$env:PMD_DIR = "D:\\pmd"         # Windows
+```
+
+不设置时默认 `~/.project.md/`。
+
 ## .pmdrc 配置文件
 
 `.pmdrc` 类似 npmrc，支持向上目录遍历。当前目录没有时自动向上查找：
