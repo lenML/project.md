@@ -55,6 +55,8 @@ export interface EventQuery {
   limit?: number;
   offset?: number;
   type?: EventType;
+  from?: string;  // ISO timestamp, inclusive
+  to?: string;    // ISO timestamp, inclusive
 }
 
 /**
@@ -76,6 +78,8 @@ export async function list_events(
 
   let filtered = all;
   if (query.type) filtered = filtered.filter((e) => e.type === query.type);
+  if (query.from) filtered = filtered.filter((e) => e.timestamp >= query.from!);
+  if (query.to) filtered = filtered.filter((e) => e.timestamp <= query.to!);
   if (query.offset) filtered = filtered.slice(query.offset);
   if (query.limit) filtered = filtered.slice(0, query.limit);
   return filtered;

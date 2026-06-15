@@ -159,6 +159,11 @@ export const useStore = create<AppStore>((set, get) => ({
     try {
       const projects = await loadProjectData(rootHandle);
       set({ projects, loading: false });
+      // 刷新事件
+      const curProject = get().view.project;
+      if (curProject) {
+        get().loadEvents(curProject);
+      }
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e), loading: false });
     }
