@@ -6,6 +6,21 @@ import {
 import { parseFrontmatter, parseCheckboxes, buildFrontmatterDoc, toggleCheckboxByHash } from "../utils/markdown";
 import type { ProjectData, KanbanData, ColumnData, CardData, EventRecord, ViewState } from "../types";
 
+// 持久化 view 状态到 localStorage
+const STORAGE_KEY = "pmd-view-state";
+function saveView(view: ViewState, rootDir: string) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ project: view.project, kanban: view.kanban, rootDir }));
+  } catch { /* skip */ }
+}
+function loadView(): { project: string | null; kanban: string | null; rootDir: string } | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
 function shortHash(text: string): string {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -122,6 +137,7 @@ interface AppStore {
   loadTrash: (proj: string, kanban: string) => Promise<void>;
   restoreFromTrash: (proj: string, kanban: string, col: string, trashPath: string) => Promise<void>;
   purgeFromTrash: (trashPath: string) => Promise<void>;
+  updateColReadme: (proj: string, kanban: string, col: string, content: string) => Promise<void>;
   updateReadme: (proj: string, content: string) => Promise<void>;
 }
 
@@ -159,6 +175,18 @@ export const useStore = create<AppStore>((set, get) => ({
     try {
       const projects = await loadProjectData(rootHandle);
       set({ projects, loading: false });
+      // 恢复记忆的看板选择
+      const saved = loadView();
+      const cur = get().view;
+      if (!cur.project && saved && saved.rootDir === get().rootDir) {
+        const projExists = projects.some((p) => p.name === saved.project);
+        const kanbanExists = projExists && projects.find((p) => p.name === saved.project)?.kanbans.some((k) => k.name === saved.kanban);
+        if (kanbanExists) {
+          set({ view: { ...get().view, project: saved.project, kanban: saved.kanban } });
+        } else if (projExists) {
+          set({ view: { ...get().view, project: saved.project } });
+        }
+      }
       // 刷新事件
       const curProject = get().view.project;
       if (curProject) {
@@ -176,7 +204,14 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ events, eventPage: 1, eventFilter: "" });
   },
 
-  setView: (v) => set((s) => ({ view: { ...s.view, ...v } })),
+  setView: (v) => set((s) => {
+    const newView = { ...s.view, ...v };
+    // 持久化 project/kanban 选择
+    if (v.project !== undefined || v.kanban !== undefined) {
+      saveView(newView, s.rootDir);
+    }
+    return { view: newView };
+  }),
   closeCard: () => set((s) => ({ view: { ...s.view, card: null } })),
   toggleWriteMode: () => set((s) => ({ writeMode: !s.writeMode })),
   setSearchQuery: (q: string) => set({ searchQuery: q }),
@@ -319,6 +354,25 @@ export const useStore = create<AppStore>((set, get) => ({
 
       const projName = card.path.split("/")[0];
       await logWebEvent(rootHandle, projName, "checkbox_toggle", "切换 checkbox: " + card.name);
+      await get().loadAll();
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  updateColReadme: async (proj, kanban, col, content) => {
+    const { rootHandle } = get();
+    if (!rootHandle) return;
+    try {
+      const projDir = await tryGetDir(rootHandle, proj);
+      if (!projDir) return;
+      const kanbanDir = await tryGetDir(projDir, kanban);
+      if (!kanbanDir) return;
+      const colDir = await tryGetDir(kanbanDir, col);
+      if (!colDir) return;
+      const readme = await createFile(colDir, "readme.md");
+      await writeTextFile(readme, content);
+      await logWebEvent(rootHandle, proj, "column_update", "更新列 readme: " + col);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });

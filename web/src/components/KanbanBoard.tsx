@@ -141,6 +141,15 @@ function ColumnView({
     setShowNew(false);
   }
 
+  const [editingReadme, setEditingReadme] = useState(false);
+  const [readmeText, setReadmeText] = useState("");
+  const updateColReadme = useStore((s) => s.updateColReadme);
+
+  async function saveColReadme() {
+    await updateColReadme(projectName, kanbanName, col.name, readmeText);
+    setEditingReadme(false);
+  }
+
   const visibleCards = col.cards.slice(0, cardPage * pageSize);
   const totalCards = col.cards.length;
   const remaining = totalCards - visibleCards.length;
@@ -158,11 +167,31 @@ function ColumnView({
       <div className="col-header flex items-center gap-2 px-2 pt-2">
           <span className="text-xs bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">{col.cards.length}</span>
           <span className="text-xs text-slate-500">{col.name}</span>
+          {writeMode && (
+            <button
+              onClick={() => { setReadmeText(col.readme || ""); setEditingReadme(true); }}
+              className="text-xs text-slate-600 hover:text-indigo-400 ml-auto transition-colors"
+              title="编辑列说明"
+            >E</button>
+          )}
           {totalCbs > 0 && (
             <span className="text-xs text-slate-600 ml-auto">{doneCbs}/{totalCbs}</span>
           )}
         </div>
-        {col.readme && (
+        {editingReadme ? (
+          <div className="px-2 pt-1 space-y-1">
+            <textarea
+              className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 font-mono min-h-16 focus:outline-none focus:border-indigo-500/50"
+              value={readmeText}
+              onChange={(e) => setReadmeText(e.target.value)}
+              placeholder="# 列说明"
+            />
+            <div className="flex gap-1">
+              <button onClick={saveColReadme} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">保存</button>
+              <button onClick={() => setEditingReadme(false)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">取消</button>
+            </div>
+          </div>
+        ) : col.readme && (
           <div className="px-2 pt-1">
             <div className="text-xs text-slate-500 italic leading-relaxed line-clamp-3">{col.readme.replace(/^#+/gm, "").trim()}</div>
           </div>
