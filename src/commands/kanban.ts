@@ -47,7 +47,11 @@ export function kanban_commands(program: Command): void {
       const t0 = Date.now();
       for (const col of cols) {
         let items = await item_list(path.join(kanban_dir, col));
-        items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+        items.sort((a, b) => {
+    const ao = a.order ?? -1; const bo = b.order ?? -1;
+    if (ao !== bo) return ao - bo;
+    return (b.created_at || "").localeCompare(a.created_at || "");
+  });
         if (!options.all) items = items.slice(0, 10);
         const cards = items.map((i) => {
           const ts = i.created_at ? format_relative_time(i.created_at) : "";

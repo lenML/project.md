@@ -133,6 +133,7 @@ interface AppStore {
   moveCard: (proj: string, kanban: string, card: CardData, destCol: string) => Promise<void>;
   updateCard: (proj: string, kanban: string, card: CardData, meta: Record<string, unknown>, body: string) => Promise<void>;
   toggleCheckbox: (hash: string) => Promise<void>;
+  reorderCard: (proj: string, kanban: string, col: string, card: CardData, newIndex: number) => Promise<void>;
   trashItems: Array<{ name: string; path: string; originalName: string }>;
   loadTrash: (proj: string, kanban: string) => Promise<void>;
   restoreFromTrash: (proj: string, kanban: string, col: string, trashPath: string) => Promise<void>;
@@ -388,6 +389,40 @@ export const useStore = create<AppStore>((set, get) => ({
       const readme = await createFile(projDir, "readme.md");
       await writeTextFile(readme, content);
       await logWebEvent(rootHandle, proj, "project_update", "更新 readme: " + proj);
+      await get().loadAll();
+    } catch (e: unknown) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  reorderCard: async (proj, kanban, col, card, newIndex) => {
+    const { rootHandle } = get();
+    if (!rootHandle) return;
+    try {
+      const projDir = await tryGetDir(rootHandle, proj);
+      if (!projDir) return;
+      const kanbanDir = await tryGetDir(projDir, kanban);
+      if (!kanbanDir) return;
+      const colDir = await tryGetDir(kanbanDir, col);
+      if (!colDir) return;
+      const entries = await listDirAll(colDir);
+      const mdFiles = entries.filter((e) => !e.isDir && e.name.endsWith('.md') && e.name !== 'readme.md');
+      mdFiles.sort((a, b) => a.name.localeCompare(b.name));
+      const cardName = card.path.split('/').pop() || '';
+      const withoutTarget = mdFiles.filter((e) => e.name !== cardName);
+      const target = mdFiles.find((e) => e.name === cardName);
+      if (!target) return;
+      const reordered = [...withoutTarget.slice(0, newIndex), target, ...withoutTarget.slice(newIndex)];
+      for (let i = 0; i < reordered.length; i++) {
+        const fh = reordered[i];
+        if (!fh) continue;
+        const raw = await readTextFile(fh.handle);
+        const parsed = parseFrontmatter(raw);
+        if (!parsed) continue;
+        const meta = { ...parsed.metadata, order: i };
+        await writeTextFile(fh.handle, buildFrontmatterDoc(meta, parsed.body));
+      }
+      await logWebEvent(rootHandle, proj, 'item_reorder', '重新排序: ' + col);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });

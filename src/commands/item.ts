@@ -20,6 +20,9 @@ export function item_commands(program: Command): void {
     .action(async (options) => {
       const dir = require_column_dir(root(), program);
       let list = await item_list(dir);
+      // 按 order 排序（如果存在）
+      const hasOrder = list.some((i) => i.order !== undefined);
+      if (hasOrder) list.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
       if (options.limit) list = list.slice(0, parseInt(options.limit, 10));
       if (list.length === 0) return console.log("(empty)");
       for (const i of list) {

@@ -29,6 +29,7 @@ export interface ItemSummary {
   id: string;
   file_path: string;
   created_at?: string;
+  order?: number;
 }
 
 export interface ItemDetail {
@@ -142,8 +143,9 @@ async function parse_item_frontmatter(file_path: string, entry_name: string): Pr
   const id = (parsed.metadata.id as string) || "";
   const name = (parsed.metadata.name as string) || entry_name.replace(/\.md$/, "");
   const created_at = (parsed.metadata.created_at as string) || "";
+  const order = parsed.metadata.order as number | undefined;
   if (!id) return null;
-  return { name, id, file_path, created_at };
+  return { name, id, file_path, created_at, order };
 }
 
 export async function item_show(file_path: string): Promise<ItemDetail | null> {
