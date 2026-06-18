@@ -51,7 +51,9 @@ export default function KanbanBoard() {
   const filteredColumns = useMemo(() => {
     if (!searchQuery) return kanban.columns;
     const q = searchQuery.toLowerCase();
-    return kanban.columns.map((col) => ({
+    return [...kanban.columns]
+      .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999))
+      .map((col) => ({
       ...col,
       cards: col.cards.filter(
         (c: CardData) =>

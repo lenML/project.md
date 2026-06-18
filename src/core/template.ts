@@ -103,7 +103,10 @@ export async function best_practice_template(kanban_dir: string): Promise<void> 
   const hooks_dir = path.join(kanban_dir, ".hooks");
   await ensure_dir(hooks_dir);
   await write_file(path.join(hooks_dir, "index.mjs"), BEST_PRACTICE_HOOKS);
-  const col_desc = {
+  const col_order: Record<string, number> = {
+    idea: 0, backlog: 1, todo: 2, doing: 3, done: 4,
+  };
+  const col_desc: Record<string, string> = {
     idea: "# idea\n\n想法/点子 \u2014 临时存放想法，不要求执行。移动到其他列后才被追踪。\n",
     backlog: "# backlog\n\n待细化 \u2014 已有初步想法，需要先拆分 checkbox 子任务才能排期。\n",
     todo: "# todo\n\n待办 \u2014 需要完成的任务，拆分到可执行的粒度。\n",
@@ -111,7 +114,8 @@ export async function best_practice_template(kanban_dir: string): Promise<void> 
     done: "# done\n\n完成 \u2014 已完成的卡片。移入前会自动检查所有 checkbox 是否完成。\n",
   };
   for (const [col, desc] of Object.entries(col_desc)) {
-    await write_file(path.join(kanban_dir, col, "readme.md"), desc);
+    const fm = "---\norder: " + (col_order[col] ?? 99) + "\n---\n\n";
+    await write_file(path.join(kanban_dir, col, "readme.md"), fm + desc);
   }
 }
 
@@ -187,8 +191,11 @@ export async function apply_template(kanban_dir: string, config: TemplateConfig)
     }
   }
 
-  // 写入列 readme
+  // 写入列 readme（带 order）
+  const col_order = Object.keys(bp_cols).reduce((acc, name, i) => { acc[name] = i; return acc; }, {} as Record<string, number>);
   for (const [col, desc] of Object.entries(all_cols)) {
-    await write_file(path.join(kanban_dir, col, "readme.md"), desc);
+    const order_val = col_order[col] ?? 99;
+    const fm = "---\norder: " + order_val + "\n---\n\n";
+    await write_file(path.join(kanban_dir, col, "readme.md"), fm + desc);
   }
 }

@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { column_init, column_list, column_read_readme } from "../core/column.js";
+import { column_init, column_list, column_read_readme, column_set_order } from "../core/column.js";
 import { require_kanban_dir } from "./_helpers.js";
 
 export function column_commands(program: Command): void {
@@ -36,5 +36,16 @@ export function column_commands(program: Command): void {
       const content = await column_read_readme(dir, col_name);
       if (content === null) return console.log("(no readme)");
       console.log(content);
+    });
+
+  cmd
+    .command("order <name>")
+    .description("设置列排序位置（使用 -p/--project -k/--kanban，0 排最前）")
+    .argument("<position>", "排序位置，留空则清除")
+    .action(async (col_name, position) => {
+      const kanban_dir = require_kanban_dir(root(), program);
+      const pos = position !== undefined ? parseInt(position, 10) : undefined;
+      await column_set_order(kanban_dir, col_name, pos);
+      console.log("order set: " + col_name + " = " + pos);
     });
 }

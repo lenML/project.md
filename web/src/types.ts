@@ -16,6 +16,7 @@ export interface ColumnData {
   name: string;
   cards: CardData[];
   readme?: string;
+  order?: number;
 }
 
 export interface KanbanData {

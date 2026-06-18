@@ -63,6 +63,7 @@ async function loadProjectData(root: FileSystemDirectoryHandle): Promise<Project
         if (c.name.startsWith(".")) continue;
         const colReadmeFile = await tryGetFile(c.handle as FileSystemDirectoryHandle, "readme.md");
         const colReadme = colReadmeFile ? await readTextFile(colReadmeFile) : undefined;
+        const colOrder = colReadme ? (parseFrontmatter(colReadme)?.metadata?.order as number | undefined) : undefined;
         const cards: CardData[] = [];
         const fileEntries = await readDir(c.handle as FileSystemDirectoryHandle);
         for (const f of fileEntries) {
@@ -76,7 +77,7 @@ async function loadProjectData(root: FileSystemDirectoryHandle): Promise<Project
             cards.push({ name, path: [entry.name, k.name, c.name, f.name].join("/"), meta, body, checkboxes: parseCheckboxes(body) });
           } catch { /* skip */ }
         }
-        columns.push({ name: c.name, cards, readme: colReadme });
+        columns.push({ name: c.name, cards, readme: colReadme, order: colOrder });
       }
       kanbans.push({ name: k.name, columns });
     }
