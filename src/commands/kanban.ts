@@ -27,10 +27,13 @@ export function kanban_commands(program: Command): void {
     .command("init <name>")
     .description("创建看板")
     .option("--bp", "使用最佳实践模板（idea/todo/doing/done 列 + hooks）")
+    .option("--template <path>", "自定义模板路径（JSON/YAML 文件或目录）")
     .action(async (kanban_name, options) => {
       const project_dir = require_project_dir(root(), program);
-      await kanban_init(project_dir, kanban_name, options.bp ? "bp" : undefined);
-      console.log("kanban: " + kanban_name + (options.bp ? " (bp)" : ""));
+      const tmpl = options.bp ? "bp" : options.template || undefined;
+      await kanban_init(project_dir, kanban_name, tmpl);
+      const tag = options.bp ? " bp" : options.template ? " template:" + options.template : "";
+      console.log("kanban: " + kanban_name + tag);
     });
 
   cmd
