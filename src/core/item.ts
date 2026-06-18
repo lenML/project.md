@@ -1,10 +1,11 @@
 import path from "node:path";
-import { rename } from "node:fs/promises";
+import { rename, stat } from "node:fs/promises";
 import { short_hash } from "../utils/hash.js";
 import {
   ensure_dir,
   list_dir,
   try_read_file,
+  try_read_frontmatter,
   write_file,
 } from "../utils/fs.js";
 import {
@@ -97,22 +98,52 @@ export async function item_new(
   return { name, id, file_path };
 }
 
+// ── mtime 缓存 ──────────────────────────────────────────────
+const _listCache = new Map<string, { mtimeMs: number; items: ItemSummary[] }>();
+
 export async function item_list(dir_path: string): Promise<ItemSummary[]> {
+  // mtime 快速失效检查
+  try {
+    const st = await stat(dir_path);
+    const cached = _listCache.get(dir_path);
+    if (cached && cached.mtimeMs === st.mtimeMs) return cached.items;
+  } catch { /* 无法 stat 则跳过缓存 */ }
+
   const entries = await list_dir(dir_path);
-  const items: ItemSummary[] = [];
+  const reads: Promise<ItemSummary | null>[] = [];
   for (const entry of entries) {
     if (!entry.name.endsWith(".md")) continue;
-    const file_path = entry.path;
-    const content = await try_read_file(file_path);
-    if (content === null) continue;
-    const parsed = parse_yaml_frontmatter(content);
-    if (parsed === null) continue;
-    const id = (parsed.metadata.id as string) || "";
-    const name = (parsed.metadata.name as string) || entry.name.replace(/\.md$/, "");
-    const created_at = (parsed.metadata.created_at as string) || "";
-    items.push({ name, id, file_path, created_at });
+    reads.push(parse_item_frontmatter(entry.path, entry.name));
   }
+  const items: ItemSummary[] = [];
+  for (const r of await Promise.all(reads)) {
+    if (r) items.push(r);
+  }
+
+  // 写入缓存（限制大小防泄漏）
+  try {
+    const st = await stat(dir_path);
+    _listCache.set(dir_path, { mtimeMs: st.mtimeMs, items });
+    if (_listCache.size > 100) {
+      const key = _listCache.keys().next().value;
+      if (key) _listCache.delete(key);
+    }
+  } catch { /* 缓存失败不影响结果 */ }
+
   return items;
+}
+
+/** 读取单个 md 文件的 frontmatter，返回 ItemSummary */
+async function parse_item_frontmatter(file_path: string, entry_name: string): Promise<ItemSummary | null> {
+  const head = await try_read_frontmatter(file_path);
+  if (head === null) return null;
+  const parsed = parse_yaml_frontmatter(head);
+  if (parsed === null) return null;
+  const id = (parsed.metadata.id as string) || "";
+  const name = (parsed.metadata.name as string) || entry_name.replace(/\.md$/, "");
+  const created_at = (parsed.metadata.created_at as string) || "";
+  if (!id) return null;
+  return { name, id, file_path, created_at };
 }
 
 export async function item_show(file_path: string): Promise<ItemDetail | null> {

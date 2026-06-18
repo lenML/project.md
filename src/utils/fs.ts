@@ -27,6 +27,23 @@ export async function try_read_file(file_path: string): Promise<string | null> {
   }
 }
 
+/**
+ * 只读取文件的 frontmatter 部分（从开头到闭合 ---），
+ * 避免读取整个文件内容。用于 item_list 等只需元数据的场景。
+ */
+export async function try_read_frontmatter(file_path: string): Promise<string | null> {
+  try {
+    const file = await readFile(file_path, "utf-8");
+    if (!file.startsWith("---")) return null;
+    const end = file.indexOf("\n---\n", 3);
+    if (end === -1) return null;
+    // 返回 frontmatter 部分（含闭合 ---）
+    return file.slice(0, end + 5);
+  } catch {
+    return null;
+  }
+}
+
 export async function write_file(
   file_path: string,
   content: string,

@@ -41,6 +41,7 @@ export function kanban_commands(program: Command): void {
       const kanban_dir = require_kanban_dir(root(), program);
       const cols = await column_list(kanban_dir);
       if (cols.length === 0) return console.log("(empty kanban)");
+      const t0 = Date.now();
       for (const col of cols) {
         let items = await item_list(path.join(kanban_dir, col));
         items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
@@ -56,7 +57,9 @@ export function kanban_commands(program: Command): void {
         if (items.length > 0) console.log(cards);
         console.log("");
       }
+      const elapsed = Date.now() - t0;
       console.log("提示: 使用 pmd checkbox --help 管理子任务");
+      if (elapsed > 200) console.log("加载耗时: " + elapsed + "ms");
     });
 
   cmd
