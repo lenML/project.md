@@ -1,6 +1,5 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { ensure_dir, write_file, try_read_file } from "../utils/fs.js";
 import { column_init } from "./column.js";
 import yaml from "js-yaml";

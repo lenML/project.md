@@ -416,11 +416,11 @@ export const useStore = create<AppStore>((set, get) => ({
       for (let i = 0; i < reordered.length; i++) {
         const fh = reordered[i];
         if (!fh) continue;
-        const raw = await readTextFile(fh.handle);
+        const raw = await readTextFile(fh.handle as FileSystemFileHandle);
         const parsed = parseFrontmatter(raw);
         if (!parsed) continue;
         const meta = { ...parsed.metadata, order: i };
-        await writeTextFile(fh.handle, buildFrontmatterDoc(meta, parsed.body));
+        await writeTextFile(fh.handle as FileSystemFileHandle, buildFrontmatterDoc(meta, parsed.body));
       }
       await logWebEvent(rootHandle, proj, 'item_reorder', '重新排序: ' + col);
       await get().loadAll();

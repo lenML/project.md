@@ -100,13 +100,13 @@ export async function item_new(
 }
 
 // ── mtime 缓存 ──────────────────────────────────────────────
-const _listCache = new Map<string, { mtimeMs: number; items: ItemSummary[] }>();
+const list_cache = new Map<string, { mtimeMs: number; items: ItemSummary[] }>();
 
 export async function item_list(dir_path: string): Promise<ItemSummary[]> {
   // mtime 快速失效检查
   try {
     const st = await stat(dir_path);
-    const cached = _listCache.get(dir_path);
+    const cached = list_cache.get(dir_path);
     if (cached && cached.mtimeMs === st.mtimeMs) return cached.items;
   } catch { /* 无法 stat 则跳过缓存 */ }
 
@@ -124,10 +124,10 @@ export async function item_list(dir_path: string): Promise<ItemSummary[]> {
   // 写入缓存（限制大小防泄漏）
   try {
     const st = await stat(dir_path);
-    _listCache.set(dir_path, { mtimeMs: st.mtimeMs, items });
-    if (_listCache.size > 100) {
-      const key = _listCache.keys().next().value;
-      if (key) _listCache.delete(key);
+    list_cache.set(dir_path, { mtimeMs: st.mtimeMs, items });
+    if (list_cache.size > 100) {
+      const key = list_cache.keys().next().value;
+      if (key) list_cache.delete(key);
     }
   } catch { /* 缓存失败不影响结果 */ }
 
