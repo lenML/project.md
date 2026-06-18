@@ -52,7 +52,7 @@ export default function CardDetail() {
             <button onClick={closeCard} className="text-slate-400 hover:text-slate-100 transition-colors"><X size={20} /></button>
           </div>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="p-6 space-y-5">
           {editing ? (
             <div className="space-y-3">
               <input className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-slate-100" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="名称" />
@@ -66,7 +66,7 @@ export default function CardDetail() {
           ) : (
             <>
               {!!c.meta.id && (
-                <div className="flex flex-wrap gap-2 text-xs text-slate-400">
+                <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">#{String(c.meta.id ?? "")}</span>
                   {!!c.meta.created_at && (
                     <span className="bg-slate-800 px-2 py-1 rounded">{new Date(String(c.meta.created_at ?? "")).toLocaleString("zh-CN")}</span>
@@ -81,7 +81,7 @@ export default function CardDetail() {
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                     Checklist ({c.checkboxes.filter((cbx) => cbx.checked).length + "/" + c.checkboxes.length})
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {c.checkboxes.map((cb) => (
                       <div key={cb.hash} className="flex items-center gap-2 text-sm">
                         <button

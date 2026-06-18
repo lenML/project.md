@@ -161,7 +161,7 @@ function ColumnView({
   return (
     <div
       data-col={col.name}
-            className={"flex flex-col min-w-72 max-w-72 shrink-0 rounded-lg transition-colors " + (isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : "")}
+            className={"flex flex-col min-w-72 max-w-72 shrink-0 rounded-xl bg-slate-900/50 p-2 transition-colors " + (isDragOver ? "bg-indigo-900/20 ring-2 ring-indigo-500/50" : "")}
       onDragOver={(e) => { e.preventDefault(); onDragOver(); }}
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
@@ -205,7 +205,7 @@ function ColumnView({
         {visibleCards.map((card: CardData) => (
           <div
             key={card.path}
-            className="card-hover"
+            className={"card-hover " + (writeMode ? "card-draggable" : "")}
             onClick={() => onCardClick(card)}
             draggable={writeMode}
             onDragStart={(e) => {
@@ -213,7 +213,7 @@ function ColumnView({
               e.dataTransfer.effectAllowed = "move";
             }}
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-2">{writeMode && <span className="drag-handle text-xs mt-0.5">⠿</span>}
               <div className="text-sm font-medium text-slate-200 mb-1">{card.name}</div>
               {writeMode && (
                 <button
@@ -251,7 +251,7 @@ function ColumnView({
         )}
         {writeMode && !showNew && (
           <button onClick={() => { setShowNew(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-            className="flex items-center justify-center gap-1 text-xs text-slate-500 hover:text-slate-300 py-2 border border-dashed border-slate-700/30 rounded transition-colors">
+            className="btn-new-card">
             <Plus size={14} /> 新建卡片
           </button>
         )}
