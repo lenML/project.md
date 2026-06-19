@@ -6,12 +6,7 @@ import os from 'node:os';
 import { project_init } from '../../src/core/project.js';
 import { kanban_init } from '../../src/core/kanban.js';
 import { column_init } from '../../src/core/column.js';
-import {
-  item_import,
-  item_list,
-  item_show,
-  type ItemSummary,
-} from '../../src/core/item.js';
+import { item_import, item_list, item_show, type ItemSummary } from '../../src/core/item.js';
 import { path_exists, try_read_file } from '../../src/utils/fs.js';
 
 let tmp_dir: string;
@@ -59,7 +54,10 @@ describe('item_import', () => {
   it('imports md file with frontmatter', async () => {
     const src = path.join(tmp_dir, 'existing.md');
     const { writeFile } = await import('node:fs/promises');
-    await writeFile(src, '---\nname: custom-name\ndesc: custom desc\npriority: high\n---\n\nBody content');
+    await writeFile(
+      src,
+      '---\nname: custom-name\ndesc: custom desc\npriority: high\n---\n\nBody content',
+    );
     const result = await item_import(column_dir, src);
     expect(result.name).toBe('custom-name');
     expect(path_exists(result.file_path)).toBe(true);
@@ -77,7 +75,8 @@ describe('item_import', () => {
    * Then it throws
    */
   it('throws on missing file', async () => {
-    await expect(item_import(column_dir, path.join(tmp_dir, 'nope.md')))
-      .rejects.toThrow('file not found');
+    await expect(item_import(column_dir, path.join(tmp_dir, 'nope.md'))).rejects.toThrow(
+      'file not found',
+    );
   });
 });

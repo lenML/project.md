@@ -1,10 +1,10 @@
-import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile, readdir, rm } from "node:fs/promises";
-import type { Dirent } from "node:fs";
-import path from "node:path";
-import os from "node:os";
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile, readdir, rm } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
-const DEFAULT_ROOT_NAME = ".project.md";
+const DEFAULT_ROOT_NAME = '.project.md';
 
 export function get_default_root(): string {
   return process.env.PMD_DIR || path.join(os.homedir(), DEFAULT_ROOT_NAME);
@@ -21,7 +21,7 @@ export function path_exists(p: string): boolean {
 
 export async function try_read_file(file_path: string): Promise<string | null> {
   try {
-    return await readFile(file_path, "utf-8");
+    return await readFile(file_path, 'utf-8');
   } catch {
     return null;
   }
@@ -33,9 +33,9 @@ export async function try_read_file(file_path: string): Promise<string | null> {
  */
 export async function try_read_frontmatter(file_path: string): Promise<string | null> {
   try {
-    const file = await readFile(file_path, "utf-8");
-    if (!file.startsWith("---")) return null;
-    const end = file.indexOf("\n---\n", 3);
+    const file = await readFile(file_path, 'utf-8');
+    if (!file.startsWith('---')) return null;
+    const end = file.indexOf('\n---\n', 3);
     if (end === -1) return null;
     // 返回 frontmatter 部分（含闭合 ---）
     return file.slice(0, end + 5);
@@ -44,12 +44,9 @@ export async function try_read_frontmatter(file_path: string): Promise<string | 
   }
 }
 
-export async function write_file(
-  file_path: string,
-  content: string,
-): Promise<void> {
+export async function write_file(file_path: string, content: string): Promise<void> {
   await mkdir(path.dirname(file_path), { recursive: true });
-  await writeFile(file_path, content, "utf-8");
+  await writeFile(file_path, content, 'utf-8');
 }
 
 export interface DirEntry {
@@ -64,7 +61,7 @@ export async function list_dir(dir_path: string): Promise<DirEntry[]> {
   })) as unknown as Dirent[];
   const results: DirEntry[] = [];
   for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
+    if (entry.name.startsWith('.')) continue;
     results.push({
       name: entry.name,
       path: path.join(dir_path, entry.name),
@@ -88,21 +85,21 @@ export function join_path(...parts: string[]): string {
 }
 
 const RELATIVE_UNITS: [string, number][] = [
-  ["秒", 60],
-  ["分钟", 60],
-  ["小时", 24],
-  ["天", 30],
-  ["月", 12],
+  ['秒', 60],
+  ['分钟', 60],
+  ['小时', 24],
+  ['天', 30],
+  ['月', 12],
 ];
 
 export function format_relative_time(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
-  if (diff < 0) return "刚刚";
+  if (diff < 0) return '刚刚';
   let seconds = Math.floor(diff / 1000);
-  if (seconds < 10) return "刚刚";
+  if (seconds < 10) return '刚刚';
   for (const [unit, divisor] of RELATIVE_UNITS) {
-    if (seconds < divisor) return seconds + unit + "前";
+    if (seconds < divisor) return seconds + unit + '前';
     seconds = Math.floor(seconds / divisor);
   }
-  return seconds + "年前";
+  return seconds + '年前';
 }

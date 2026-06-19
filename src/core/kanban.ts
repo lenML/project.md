@@ -7,11 +7,15 @@ import { best_practice_template, load_template_config, apply_template } from './
  * 创建 kanban 目录，并自动创建 .trash 回收站。
  * @returns kanban 绝对路径
  */
-export async function kanban_init(project_dir: string, name: string, template?: string): Promise<string> {
+export async function kanban_init(
+  project_dir: string,
+  name: string,
+  template?: string,
+): Promise<string> {
   const k_dir = path.join(project_dir, name);
   await ensure_dir(k_dir);
   await ensure_trash(k_dir);
-  if (template === "bp") {
+  if (template === 'bp') {
     await best_practice_template(k_dir);
   } else if (template) {
     // 自定义模板：template 是文件或目录路径
@@ -19,7 +23,7 @@ export async function kanban_init(project_dir: string, name: string, template?: 
     if (config) {
       await apply_template(k_dir, config);
     } else {
-      console.error("无法加载模板: " + template);
+      console.error('无法加载模板: ' + template);
     }
   }
   return k_dir;
@@ -31,7 +35,7 @@ export async function kanban_init(project_dir: string, name: string, template?: 
 export async function kanban_list(project_dir: string): Promise<string[]> {
   const entries = await list_dir(project_dir);
   // 排除 readme.md 等已知非 kanban 文件/目录
-  return entries.filter(e => e.is_dir && e.name !== 'readme.md').map(e => e.name);
+  return entries.filter((e) => e.is_dir && e.name !== 'readme.md').map((e) => e.name);
 }
 
 /**

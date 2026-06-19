@@ -1,10 +1,10 @@
-import { readFileSync, existsSync, writeFileSync, unlinkSync } from "node:fs";
-import path from "node:path";
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs';
+import path from 'node:path';
 
 export type PmdrcConfig = Record<string, string>;
 
-const RC_FILENAME = ".pmdrc";
-const LEGACY_FILENAME = ".pmd-link";
+const RC_FILENAME = '.pmdrc';
+const LEGACY_FILENAME = '.pmd-link';
 
 /**
  * 从 start_dir 开始向上查找 .pmdrc 文件。
@@ -29,10 +29,10 @@ export function find_pmdrc(start_dir?: string): { dir: string; file: string } | 
  */
 export function parse_pmdrc(content: string): PmdrcConfig {
   const config: PmdrcConfig = {};
-  for (const line of content.split("\n")) {
+  for (const line of content.split('\n')) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq_idx = trimmed.indexOf("=");
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq_idx = trimmed.indexOf('=');
     if (eq_idx === -1) continue;
     const key = trimmed.slice(0, eq_idx).trim();
     const value = trimmed.slice(eq_idx + 1).trim();
@@ -48,7 +48,7 @@ export function read_pmdrc(start_dir?: string): PmdrcConfig | null {
   const found = find_pmdrc(start_dir);
   if (!found) return null;
   try {
-    const content = readFileSync(found.file, "utf-8");
+    const content = readFileSync(found.file, 'utf-8');
     return parse_pmdrc(content);
   } catch {
     return null;
@@ -64,11 +64,11 @@ export function get_pmdrc_value(key: string, start_dir?: string): string | null 
   if (config && config[key] !== undefined) return config[key];
 
   // 兼容旧 .pmd-link
-  if (key === "project") {
+  if (key === 'project') {
     const dir = start_dir || process.cwd();
     const legacy = path.join(dir, LEGACY_FILENAME);
     try {
-      return readFileSync(legacy, "utf-8").trim() || null;
+      return readFileSync(legacy, 'utf-8').trim() || null;
     } catch {
       return null;
     }
@@ -87,15 +87,15 @@ export function write_pmdrc(dir: string, updates: PmdrcConfig): void {
   let existing: PmdrcConfig = {};
 
   try {
-    const content = readFileSync(file_path, "utf-8");
+    const content = readFileSync(file_path, 'utf-8');
     existing = parse_pmdrc(content);
   } catch {
     // 文件不存在
   }
 
   const merged = { ...existing, ...updates };
-  const lines = Object.entries(merged).map(([k, v]) => k + " = " + v);
-  writeFileSync(file_path, lines.join("\n") + "\n", "utf-8");
+  const lines = Object.entries(merged).map(([k, v]) => k + ' = ' + v);
+  writeFileSync(file_path, lines.join('\n') + '\n', 'utf-8');
 }
 
 /**
@@ -107,16 +107,20 @@ export function remove_pmdrc_key(dir: string, key: string): void {
   const found = find_pmdrc(dir);
   const file_path = found ? found.file : path.join(dir, RC_FILENAME);
   try {
-    const content = readFileSync(file_path, "utf-8");
+    const content = readFileSync(file_path, 'utf-8');
     const config = parse_pmdrc(content);
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-  delete config[key];
+    delete config[key];
 
     if (Object.keys(config).length === 0) {
-      try { unlinkSync(file_path); } catch { /* ignore */ }
+      try {
+        unlinkSync(file_path);
+      } catch {
+        /* ignore */
+      }
     } else {
-      const lines = Object.entries(config).map(([k, v]) => k + " = " + v);
-      writeFileSync(file_path, lines.join("\n") + "\n", "utf-8");
+      const lines = Object.entries(config).map(([k, v]) => k + ' = ' + v);
+      writeFileSync(file_path, lines.join('\n') + '\n', 'utf-8');
     }
   } catch {
     // 文件不存在忽略

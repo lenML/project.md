@@ -21,7 +21,7 @@ export interface ColumnInfo {
  */
 export async function column_list(kanban_dir: string): Promise<string[]> {
   const entries = await list_dir(kanban_dir);
-  const cols = entries.filter(e => e.is_dir).map(e => e.name);
+  const cols = entries.filter((e) => e.is_dir).map((e) => e.name);
   return column_sort(kanban_dir, cols);
 }
 
@@ -43,7 +43,11 @@ async function column_sort(kanban_dir: string, cols: string[]): Promise<string[]
  * 设置列排序位置（写入列 readme 的 frontmatter）。
  * position = 0 排最前，省略则清除 order
  */
-export async function column_set_order(kanban_dir: string, col_name: string, position?: number): Promise<void> {
+export async function column_set_order(
+  kanban_dir: string,
+  col_name: string,
+  position?: number,
+): Promise<void> {
   const readme_path = path.join(kanban_dir, col_name, 'readme.md');
   const existing = (await try_read_file(readme_path)) || '';
   const parsed = parse_yaml_frontmatter(existing);
@@ -65,7 +69,10 @@ export async function column_set_order(kanban_dir: string, col_name: string, pos
   await write_file(readme_path, content);
 }
 
-export async function column_read_readme(kanban_dir: string, col_name: string): Promise<string | null> {
+export async function column_read_readme(
+  kanban_dir: string,
+  col_name: string,
+): Promise<string | null> {
   const readme_path = path.join(kanban_dir, col_name, 'readme.md');
   return try_read_file(readme_path);
 }

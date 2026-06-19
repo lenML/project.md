@@ -1,6 +1,6 @@
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-import { existsSync } from "node:fs";
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { existsSync } from 'node:fs';
 
 // ── 类型定义 ───────────────────────────────────────────────────────────────
 
@@ -34,14 +34,14 @@ export interface Hooks {
 }
 
 export const HOOK_NAMES: (keyof Hooks)[] = [
-  "before_item_move",
-  "after_item_move",
-  "before_item_create",
-  "after_item_create",
-  "before_item_delete",
-  "after_item_delete",
-  "before_checkbox_toggle",
-  "after_checkbox_toggle",
+  'before_item_move',
+  'after_item_move',
+  'before_item_create',
+  'after_item_create',
+  'before_item_delete',
+  'after_item_delete',
+  'before_checkbox_toggle',
+  'after_checkbox_toggle',
 ];
 
 // ── 路径工具 ───────────────────────────────────────────────────────────────
@@ -58,22 +58,20 @@ export function get_kanban_dir_from_item(item_path: string): string | null {
 
 /** kanban 的 hooks 目录 */
 export function get_hooks_dir(kanban_dir: string): string {
-  return path.join(kanban_dir, ".hooks");
+  return path.join(kanban_dir, '.hooks');
 }
 
 // ── 加载 .hooks/index.mjs ──────────────────────────────────────────────────
 
-async function load_index_hooks(
-  kanban_dir: string,
-): Promise<Partial<Hooks>> {
-  const index_path = path.join(get_hooks_dir(kanban_dir), "index.mjs");
+async function load_index_hooks(kanban_dir: string): Promise<Partial<Hooks>> {
+  const index_path = path.join(get_hooks_dir(kanban_dir), 'index.mjs');
   if (!existsSync(index_path)) return {};
 
   try {
     const mod = await import(pathToFileURL(index_path).href);
     const result: Partial<Hooks> = {};
     for (const name of HOOK_NAMES) {
-      if (typeof mod[name] === "function") {
+      if (typeof mod[name] === 'function') {
         result[name] = mod[name];
       }
     }
@@ -85,19 +83,13 @@ async function load_index_hooks(
 
 // ── 加载列级钩子（向后兼容） ──────────────────────────────────────────────
 
-async function load_column_hook(
-  kanban_dir: string,
-  column_name: string,
-): Promise<HookFn | null> {
-  const hook_path = path.join(
-    get_hooks_dir(kanban_dir),
-    column_name + ".mjs",
-  );
+async function load_column_hook(kanban_dir: string, column_name: string): Promise<HookFn | null> {
+  const hook_path = path.join(get_hooks_dir(kanban_dir), column_name + '.mjs');
   if (!existsSync(hook_path)) return null;
 
   try {
     const mod = await import(pathToFileURL(hook_path).href);
-    if (typeof mod.before_move === "function") return mod.before_move;
+    if (typeof mod.before_move === 'function') return mod.before_move;
     return null;
   } catch {
     return null;
@@ -109,9 +101,7 @@ async function load_column_hook(
 /**
  * 加载 kanban 的所有 hooks（index.mjs）。
  */
-export async function load_hooks(
-  kanban_dir: string,
-): Promise<Partial<Hooks>> {
+export async function load_hooks(kanban_dir: string): Promise<Partial<Hooks>> {
   return load_index_hooks(kanban_dir);
 }
 
@@ -142,10 +132,7 @@ export async function run_before_hook(
   }
 
   // 2. 列级钩子（向后兼容，仅 before_item_move）
-  if (
-    hook_name === "before_item_move" &&
-    ctx.dest_column
-  ) {
+  if (hook_name === 'before_item_move' && ctx.dest_column) {
     const col_hook = await load_column_hook(kanban_dir, ctx.dest_column);
     if (col_hook) {
       const result = await col_hook(ctx);

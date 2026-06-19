@@ -1,15 +1,15 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { short_hash } from "../utils/hash.js";
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { short_hash } from '../utils/hash.js';
 
 export type EventType =
-  | "project_init"
-  | "item_create"
-  | "item_move"
-  | "item_delete"
-  | "item_trash"
-  | "checkbox_toggle";
+  | 'project_init'
+  | 'item_create'
+  | 'item_move'
+  | 'item_delete'
+  | 'item_trash'
+  | 'checkbox_toggle';
 
 export interface EventRecord {
   id: string;
@@ -21,11 +21,11 @@ export interface EventRecord {
 }
 
 function get_events_path(project_dir: string): string {
-  return path.join(project_dir, "events.jsonl");
+  return path.join(project_dir, 'events.jsonl');
 }
 
 function get_web_events_path(project_dir: string): string {
-  return path.join(project_dir, "events.web.jsonl");
+  return path.join(project_dir, 'events.web.jsonl');
 }
 
 /**
@@ -42,12 +42,12 @@ export async function log_event(
   const ts = new Date().toISOString();
   const id = short_hash(type + ts + title);
   const record: EventRecord = { id, timestamp: ts, type, title, content, meta };
-  const line = JSON.stringify(record) + "\n";
+  const line = JSON.stringify(record) + '\n';
   const file_path = get_events_path(project_dir);
   if (!existsSync(path.dirname(file_path))) {
     await mkdir(path.dirname(file_path), { recursive: true });
   }
-  await appendFile(file_path, line, "utf-8");
+  await appendFile(file_path, line, 'utf-8');
   return record;
 }
 
@@ -55,8 +55,8 @@ export interface EventQuery {
   limit?: number;
   offset?: number;
   type?: EventType;
-  from?: string;  // ISO timestamp, inclusive
-  to?: string;    // ISO timestamp, inclusive
+  from?: string; // ISO timestamp, inclusive
+  to?: string; // ISO timestamp, inclusive
 }
 
 /**
@@ -67,11 +67,11 @@ export async function list_events(
   query: EventQuery = {},
 ): Promise<EventRecord[]> {
   const all: EventRecord[] = [];
-  for (const fname of ["events.jsonl", "events.web.jsonl"]) {
+  for (const fname of ['events.jsonl', 'events.web.jsonl']) {
     const fp = path.join(project_dir, fname);
     if (!existsSync(fp)) continue;
-    const content = await readFile(fp, "utf-8");
-    const lines = content.trimEnd().split("\n").filter(Boolean);
+    const content = await readFile(fp, 'utf-8');
+    const lines = content.trimEnd().split('\n').filter(Boolean);
     all.push(...lines.map((l) => JSON.parse(l) as EventRecord));
   }
   all.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
@@ -96,14 +96,14 @@ export async function log_web_event(
   meta?: Record<string, unknown>,
 ): Promise<EventRecord> {
   const ts = new Date().toISOString();
-  const id = short_hash("web" + type + ts + title);
+  const id = short_hash('web' + type + ts + title);
   const record: EventRecord = { id, timestamp: ts, type, title, content, meta };
-  const line = JSON.stringify(record) + "\n";
+  const line = JSON.stringify(record) + '\n';
   const file_path = get_web_events_path(project_dir);
   if (!existsSync(path.dirname(file_path))) {
     await mkdir(path.dirname(file_path), { recursive: true });
   }
-  await appendFile(file_path, line, "utf-8");
+  await appendFile(file_path, line, 'utf-8');
   return record;
 }
 
@@ -113,13 +113,13 @@ export async function log_web_event(
 export function make_paths_relative(
   project_dir: string,
   meta: Record<string, unknown>,
-  path_keys: string[] = ["file_path"],
+  path_keys: string[] = ['file_path'],
 ): Record<string, unknown> {
   const result = { ...meta };
   for (const key of path_keys) {
     const val = result[key];
-    if (typeof val === "string") {
-      result[key] = path.relative(project_dir, val).replace(/\\/g, "/");
+    if (typeof val === 'string') {
+      result[key] = path.relative(project_dir, val).replace(/\\/g, '/');
     }
   }
   return result;
@@ -133,7 +133,7 @@ export function get_project_dir(item_or_column_path: string): string {
   // 向上找到 readme.md 所在目录
   let dir = path.dirname(item_or_column_path);
   for (let i = 0; i < 10; i++) {
-    if (existsSync(path.join(dir, "readme.md"))) return dir;
+    if (existsSync(path.join(dir, 'readme.md'))) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;

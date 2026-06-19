@@ -1,5 +1,5 @@
-import { mkdir, rm, rename } from "node:fs/promises";
-import { writeFile, readFile } from "node:fs/promises";
+import { mkdir, rm, rename } from 'node:fs/promises';
+import { writeFile, readFile } from 'node:fs/promises';
 
 /**
  * 基于 mkdir 的文件锁（跨平台原子操作）。
@@ -9,7 +9,7 @@ export class FileLock {
   private lock_dir: string;
 
   constructor(private file_path: string) {
-    this.lock_dir = file_path + ".lock";
+    this.lock_dir = file_path + '.lock';
   }
 
   /** 尝试获取锁，重试直到超时（ms）。 */
@@ -21,7 +21,7 @@ export class FileLock {
         await mkdir(this.lock_dir, { recursive: false });
         return;
       } catch (err: unknown) {
-        if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+        if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
           last_err = err as Error;
           await sleep(50);
           continue;
@@ -30,13 +30,15 @@ export class FileLock {
       }
     }
     throw new Error(
-      "lock timeout: " + this.file_path + " (" + (last_err?.message || "EEXIST") + ")",
+      'lock timeout: ' + this.file_path + ' (' + (last_err?.message || 'EEXIST') + ')',
     );
   }
 
   /** 释放锁。 */
   async release(): Promise<void> {
-    await rm(this.lock_dir, { recursive: true, force: true }).catch(() => {/* ignore */});
+    await rm(this.lock_dir, { recursive: true, force: true }).catch(() => {
+      /* ignore */
+    });
   }
 
   /**
@@ -60,12 +62,9 @@ function sleep(ms: number): Promise<void> {
 /**
  * 原子性写入文件（临时文件 + rename，同一文件系统 rename 原子）。
  */
-export async function atomic_write_file(
-  file_path: string,
-  content: string,
-): Promise<void> {
-  const tmp_path = file_path + ".tmp." + process.pid + "." + Date.now();
-  await writeFile(tmp_path, content, "utf-8");
+export async function atomic_write_file(file_path: string, content: string): Promise<void> {
+  const tmp_path = file_path + '.tmp.' + process.pid + '.' + Date.now();
+  await writeFile(tmp_path, content, 'utf-8');
   await rename(tmp_path, file_path);
 }
 
@@ -83,7 +82,7 @@ export async function safe_update_file(
   try {
     let content: string | null = null;
     try {
-      content = await readFile(file_path, "utf-8");
+      content = await readFile(file_path, 'utf-8');
     } catch {
       content = null;
     }

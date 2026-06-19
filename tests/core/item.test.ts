@@ -74,7 +74,7 @@ describe('item_list', () => {
     const b = await item_new(column_dir, 'task-b');
     const list = await item_list(column_dir);
     expect(list).toHaveLength(2);
-    const names = list.map(i => i.name).sort();
+    const names = list.map((i) => i.name).sort();
     expect(names).toEqual(['task-a', 'task-b']);
   });
 
