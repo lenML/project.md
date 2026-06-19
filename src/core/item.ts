@@ -25,6 +25,7 @@ import { kanban_list } from "./kanban.js";
 import { column_list } from "./column.js";
 
 export interface ItemSummary {
+  mtime_ms?: number;
   name: string;
   id: string;
   file_path: string;
@@ -145,7 +146,12 @@ async function parse_item_frontmatter(file_path: string, entry_name: string): Pr
   const created_at = (parsed.metadata.created_at as string) || "";
   const order = parsed.metadata.order as number | undefined;
   if (!id) return null;
-  return { name, id, file_path, created_at, order };
+  let mtime_ms: number | undefined;
+  try {
+    const st = await stat(file_path);
+    mtime_ms = st.mtimeMs;
+  } catch { /* skip */ }
+  return { name, id, file_path, created_at, order, mtime_ms };
 }
 
 export async function item_show(file_path: string): Promise<ItemDetail | null> {

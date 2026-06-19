@@ -22,7 +22,16 @@ export function item_commands(program: Command): void {
       let list = await item_list(dir);
       // 按 order 排序（如果存在）
       const hasOrder = list.some((i) => i.order !== undefined);
-      if (hasOrder) list.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+      if (hasOrder) {
+        list.sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+      } else {
+        // 按最近操作时间排序
+        list.sort((a, b) => {
+          const am = a.mtime_ms ?? 0; const bm = b.mtime_ms ?? 0;
+          if (am !== bm) return bm - am;
+          return (b.created_at || "").localeCompare(a.created_at || "");
+        });
+      }
       if (options.limit) list = list.slice(0, parseInt(options.limit, 10));
       if (list.length === 0) return console.log("(empty)");
       for (const i of list) {

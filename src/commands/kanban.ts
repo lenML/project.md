@@ -50,6 +50,9 @@ export function kanban_commands(program: Command): void {
         items.sort((a, b) => {
     const ao = a.order ?? -1; const bo = b.order ?? -1;
     if (ao !== bo) return ao - bo;
+    // 按最近操作时间排序（mtime 越新越靠前）
+    const am = a.mtime_ms ?? 0; const bm = b.mtime_ms ?? 0;
+    if (am !== bm) return bm - am;
     return (b.created_at || "").localeCompare(a.created_at || "");
   });
         if (!options.all) items = items.slice(0, 10);
@@ -111,7 +114,11 @@ export async function kanban_show_all(program: Command): Promise<void> {
     const cols = await column_list(path.join(project_dir, kb));
     for (const col of cols) {
       const items = await item_list(path.join(project_dir, kb, col));
-      items.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      items.sort((a, b) => {
+    const am = a.mtime_ms ?? 0; const bm = b.mtime_ms ?? 0;
+    if (am !== bm) return bm - am;
+    return (b.created_at || "").localeCompare(a.created_at || "");
+  });
       const cards = items.slice(0, 10).map((i) => {
         const ts = i.created_at ? format_relative_time(i.created_at) : "";
         return "  " + i.id + "  " + i.name + (ts ? "  (" + ts + ")" : "");
