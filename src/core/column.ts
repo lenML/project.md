@@ -45,7 +45,7 @@ async function column_sort(kanban_dir: string, cols: string[]): Promise<string[]
  */
 export async function column_set_order(kanban_dir: string, col_name: string, position?: number): Promise<void> {
   const readme_path = path.join(kanban_dir, col_name, 'readme.md');
-  let existing = (await try_read_file(readme_path)) || '';
+  const existing = (await try_read_file(readme_path)) || '';
   const parsed = parse_yaml_frontmatter(existing);
   let metadata: Record<string, unknown>;
   let body: string;

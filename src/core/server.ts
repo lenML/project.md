@@ -4,7 +4,7 @@ import path from "node:path";
 import { project_list } from "./project.js";
 import { kanban_list } from "./kanban.js";
 import { column_list } from "./column.js";
-import { item_list, item_show, item_new, item_move } from "./item.js";
+import { item_list, item_new, item_move } from "./item.js";
 import { checkbox_list, checkbox_toggle } from "./checkbox.js";
 import { list_events, log_event } from "./event_log.js";
 
@@ -155,7 +155,7 @@ export async function start_server(opts: ServerOptions): Promise<void> {
     }
   });
 
-  return new Promise((resolve) => {
+  return new Promise((_resolve) => {
     srv.listen(port, () => {
       console.log(`pmd server running on http://localhost:${port}`);
       if (token) console.log(`auth token: ${token}`);

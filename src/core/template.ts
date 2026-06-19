@@ -1,3 +1,5 @@
+/* eslint-disable no-useless-escape */
+
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { ensure_dir, write_file, try_read_file } from "../utils/fs.js";
@@ -25,6 +27,7 @@ export function before_item_move(ctx) {
   if (ctx.src_column === "backlog" && ctx.dest_column === "todo" && ctx.item_path) {
     try {
       const content = readFileSync(ctx.item_path, "utf-8");
+      // eslint-disable-next-line no-useless-escape
       const hasCb = /^- \[ |x\] /m.test(content);
       if (!hasCb) {
         return { ok: false, message: "backlog 卡片移入 todo 前需细化 checkbox 子任务" };
@@ -36,7 +39,7 @@ export function before_item_move(ctx) {
       const content = readFileSync(ctx.item_path, "utf-8");
       const unchecked = content
         .split("\\n")
-        .filter((l) => /^\\s*-\\s+\\[\\s\\]/.test(l))
+        .filter((l) => /^\s*-\s+\[\s\]/.test(l))
         .map((l) => l.trim());
       if (unchecked.length > 0) {
         return { ok: false, message: unchecked.length + " 个 checkbox 未完成: " + unchecked.join(", ") };
