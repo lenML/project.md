@@ -67,10 +67,7 @@ function is_it_call(node: ts.CallExpression): string | false {
   const callee = node.expression;
 
   // it('desc', fn)
-  if (
-    ts.isIdentifier(callee) &&
-    callee.text === 'it'
-  ) {
+  if (ts.isIdentifier(callee) && callee.text === 'it') {
     return get_string_arg(node);
   }
 
@@ -142,7 +139,7 @@ function has_bdd_comments(full_text: string, position: number): boolean {
 
 // ── Main ───────────────────────────────────────────────────────────────────
 
-const src_dir = path.join(CWD, 'src');
+const src_dir = path.join(CWD, 'tests');
 const test_files = collect_test_files(src_dir);
 
 interface Violation {
@@ -155,12 +152,7 @@ let total_it_calls = 0;
 
 for (const file_path of test_files) {
   const content = fs.readFileSync(file_path, 'utf-8');
-  const source_file = ts.createSourceFile(
-    file_path,
-    content,
-    ts.ScriptTarget.Latest,
-    false,
-  );
+  const source_file = ts.createSourceFile(file_path, content, ts.ScriptTarget.Latest, false);
 
   const rel_path = path.relative(CWD, file_path).replace(/\\/g, '/');
   const it_calls = collect_it_calls(source_file, source_file);
@@ -169,8 +161,7 @@ for (const file_path of test_files) {
   for (const call of it_calls) {
     if (call.desc === null) continue; // no description string
 
-    const line =
-      content.slice(0, call.pos).split('\n').length;
+    const line = content.slice(0, call.pos).split('\n').length;
 
     if (!has_bdd_comments(content, call.pos)) {
       console.log(
@@ -194,4 +185,3 @@ if (violations.length === 0) {
 }
 
 process.exit(violations.length > 0 ? 1 : 0);
-
