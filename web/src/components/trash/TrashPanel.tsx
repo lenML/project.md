@@ -1,4 +1,4 @@
-import { useStore } from "../stores/useStore";
+import { useStore } from "../../stores/useStore";
 import { useState } from "react";
 import { Trash2, RotateCcw, X, AlertTriangle } from "lucide-react";
 

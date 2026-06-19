@@ -1,7 +1,7 @@
-import { useStore } from "../stores/useStore";
+import { useStore } from "../../stores/useStore";
 import { Terminal, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
-import type { EventRecord } from "../types";
+import type { EventRecord } from "../../types";
 
 const TYPE_COLORS: Record<string, string> = {
   project_init: "text-blue-400",
