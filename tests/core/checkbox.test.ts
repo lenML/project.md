@@ -33,6 +33,12 @@ afterEach(async () => {
 });
 
 describe('checkbox_list', () => {
+  /**
+   * Lists all checkboxes
+   * Given an item with 3 checkboxes a b c
+   * When checkbox_list is called
+   * Then returns 3 items with correct text
+   */
   it('lists all checkboxes', async () => {
     const items = await checkbox_list(item_path);
     expect(items).toHaveLength(3);
@@ -43,6 +49,12 @@ describe('checkbox_list', () => {
 });
 
 describe('checkbox_toggle', () => {
+  /**
+   * Toggles single checkbox
+   * Given an item with checkboxes a b c
+   * When checkbox_toggle is called with hash of a
+   * Then only a becomes checked
+   */
   it('toggles single hash', async () => {
     const before = await checkbox_list(item_path);
     await checkbox_toggle(item_path, before[0].hash);
@@ -67,6 +79,12 @@ describe('checkbox_toggle', () => {
     expect(after[2].checked).toBe(true);
   });
 
+  /**
+   * No-arg toggle does nothing
+   * Given an item with checkboxes
+   * When checkbox_toggle is called without hashes
+   * Then no checkbox changes state
+   */
   it('no-arg does nothing', async () => {
     await checkbox_toggle(item_path);
     const after = await checkbox_list(item_path);

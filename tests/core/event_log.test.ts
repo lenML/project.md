@@ -19,6 +19,12 @@ afterEach(async () => {
 });
 
 describe('log_event', () => {
+  /**
+   * Appends event to events.jsonl
+   * Given a project dir
+   * When log_event is called
+   * Then record has id/type/title/content and is written to events.jsonl
+   */
   it('appends event to events.jsonl', async () => {
     const record = await log_event(proj_dir, 'item_create', 'test event', 'content');
     expect(record.id).toMatch(/^[0-9a-f]{8}$/);
@@ -31,6 +37,12 @@ describe('log_event', () => {
     expect(content).toContain(record.id);
   });
 
+  /**
+   * Supports meta field
+   * Given a project dir
+   * When log_event is called with meta object
+   * Then record contains the meta field
+   */
   it('supports meta field', async () => {
     const record = await log_event(proj_dir, 'item_move', 'move', undefined, {
       from: 'todo',
@@ -41,6 +53,12 @@ describe('log_event', () => {
 });
 
 describe('list_events', () => {
+  /**
+   * Returns events in reverse chronological order
+   * Given existing events with different timestamps
+   * When list_events is called
+   * Then newest event appears first
+   */
   it('returns events in reverse chronological order', async () => {
     // project_init already logged 1 event; add 2 more
     await log_event(proj_dir, 'project_init', 'first');
@@ -52,6 +70,12 @@ describe('list_events', () => {
     expect(events[1].title).toBe('first');
   });
 
+  /**
+   * Filters by type
+   * Given events of different types
+   * When list_events is called with type filter
+   * Then only matching events are returned
+   */
   it('filters by type', async () => {
     await log_event(proj_dir, 'project_init', 'init');
     await log_event(proj_dir, 'item_create', 'create');
@@ -60,6 +84,12 @@ describe('list_events', () => {
     expect(filtered[0].title).toBe('create');
   });
 
+  /**
+   * Respects limit
+   * Given 3 events
+   * When list_events is called with limit 2
+   * Then only 2 events are returned
+   */
   it('respects limit', async () => {
     await log_event(proj_dir, 'project_init', 'a');
     await log_event(proj_dir, 'item_create', 'b');
@@ -68,6 +98,12 @@ describe('list_events', () => {
     expect(events).toHaveLength(2);
   });
 
+  /**
+   * Returns empty array when no events
+   * Given a fresh directory without events
+   * When list_events is called
+   * Then returns empty array
+   */
   it('returns empty array when no events', async () => {
     // use a fresh dir without project_init
     const fresh_dir = path.join(tmp_dir, 'empty-proj');

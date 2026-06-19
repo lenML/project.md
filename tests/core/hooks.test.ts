@@ -35,11 +35,23 @@ afterEach(async () => {
 });
 
 describe('load_hooks', () => {
+  /**
+   * Returns empty for kanban without hooks
+   * Given a kanban dir without .hooks
+   * When load_hooks is called
+   * Then returns empty object
+   */
   it('returns empty for kanban without hooks', async () => {
     const hooks = await load_hooks(kanban_dir);
     expect(Object.keys(hooks)).toHaveLength(0);
   });
 
+  /**
+   * Loads hooks from index.mjs
+   * Given a kanban with .hooks/index.mjs
+   * When load_hooks is called
+   * Then returns an object containing before_item_move function
+   */
   it('loads hooks from index.mjs', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -54,6 +66,12 @@ describe('load_hooks', () => {
 });
 
 describe('run_before_hook', () => {
+  /**
+   * Runs before_item_move from index.mjs
+   * Given a kanban with .hooks/index.mjs that denies move
+   * When run_before_hook is called for before_item_move
+   * Then returns blocked result with message containing dest column
+   */
   it('runs before_item_move from index.mjs', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -72,6 +90,12 @@ describe('run_before_hook', () => {
     expect(result!.message).toContain('done');
   });
 
+  /**
+   * Returns null when hook allows
+   * Given a kanban with .hooks/index.mjs that allows move
+   * When run_before_hook is called
+   * Then returns null
+   */
   it('returns null when hook allows', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -86,6 +110,12 @@ describe('run_before_hook', () => {
     expect(result).toBeNull();
   });
 
+  /**
+   * Falls back to column-level .mjs
+   * Given a kanban with .hooks/todo.mjs
+   * When run_before_hook is called with dest_column=todo
+   * Then column-level hook runs
+   */
   it('falls back to column-level .mjs for before_item_move', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -102,6 +132,12 @@ describe('run_before_hook', () => {
     expect(result!.message).toContain('col hook');
   });
 
+  /**
+   * index.mjs takes priority over column-level hook
+   * Given both .hooks/index.mjs and .hooks/todo.mjs
+   * When run_before_hook is called
+   * Then index.mjs result is returned
+   */
   it('index.mjs takes priority over column-level hook', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -123,6 +159,12 @@ describe('run_before_hook', () => {
 });
 
 describe('hooks integrate with item ops', () => {
+  /**
+   * before_item_create can block item_new
+   * Given a kanban with .hooks that blocks item_create
+   * When item_new is called
+   * Then it rejects with error message
+   */
   it('before_item_create can block item_new', async () => {
     const hooks_dir = path.join(kanban_dir, '.hooks');
     await mkdir(hooks_dir, { recursive: true });
@@ -134,6 +176,12 @@ describe('hooks integrate with item ops', () => {
     await expect(item_new(col_todo, 'blocked')).rejects.toThrow('no create allowed');
   });
 
+  /**
+   * before_item_delete can block item_remove
+   * Given a kanban with .hooks that blocks item_delete
+   * When item_remove is called
+   * Then it rejects with error message
+   */
   it('before_item_delete can block item_remove', async () => {
     const item = await item_new(col_todo, 'protected');
     const hooks_dir = path.join(kanban_dir, '.hooks');
@@ -146,6 +194,12 @@ describe('hooks integrate with item ops', () => {
     await expect(item_remove(item.file_path)).rejects.toThrow('no delete');
   });
 
+  /**
+   * before_checkbox_toggle blocks toggle
+   * Given a kanban with .hooks that blocks checkbox_toggle
+   * When checkbox_toggle is called
+   * Then it rejects with error message
+   */
   it('before_checkbox_toggle blocks toggle (single or multi)', async () => {
     const item = await item_new(col_todo, 'locked');
     const content = (await try_read_file(item.file_path))!;
