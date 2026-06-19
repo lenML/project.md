@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { usePolling } from "./hooks/usePolling";
 import { useStore } from "./stores/useStore";
 import DirPicker from "./components/DirPicker";
 import Sidebar from "./components/Sidebar";
@@ -18,14 +18,7 @@ export default function App() {
   const loadAll = useStore((s) => s.loadAll);
   const selectDir = useStore((s) => s.selectDir);
   const toggleWriteMode = useStore((s) => s.toggleWriteMode);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (rootHandle) {
-      intervalRef.current = setInterval(() => loadAll(), 3000);
-      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-    }
-  }, [rootHandle, loadAll]);
+  usePolling(loadAll, !!rootHandle, 3000);
 
   if (!rootHandle) return <DirPicker />;
 

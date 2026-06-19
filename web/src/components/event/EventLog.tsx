@@ -2,6 +2,7 @@ import { useStore } from "../../stores/useStore";
 import { Terminal, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useMemo, useRef } from "react";
 import type { EventRecord } from "../../types";
+import { formatTime } from "../../utils/format";
 
 const TYPE_COLORS: Record<string, string> = {
   project_init: "text-blue-400",
@@ -75,7 +76,7 @@ export default function EventLog() {
         )}
         {visible.map((e: EventRecord) => (
           <div key={e.id} className="flex items-start gap-3 px-4 py-1.5 hover:bg-slate-800/30 transition-colors border-b border-slate-800/30 last:border-0">
-            <span className="text-slate-600 shrink-0 w-28">{new Date(e.timestamp).toLocaleString("zh-CN")}</span>
+            <span className="text-slate-600 shrink-0 w-28">{formatTime(e.timestamp)}</span>
             <span className={"shrink-0 w-20 " + (TYPE_COLORS[e.type] || "text-slate-500")}>{e.type}</span>
             <span className="text-slate-300 truncate">{e.title}</span>
             {e.content && <span className="text-slate-500 ml-auto shrink-0 truncate max-w-48">{e.content}</span>}

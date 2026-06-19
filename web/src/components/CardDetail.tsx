@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../stores/useStore";
+import { formatTime } from "../utils/format";
 import { X, CheckSquare2, Square, Edit3, Save, Trash2 } from "lucide-react";
 
 export default function CardDetail() {
@@ -69,7 +70,7 @@ export default function CardDetail() {
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">#{String(c.meta.id ?? "")}</span>
                   {!!c.meta.created_at && (
-                    <span className="bg-slate-800 px-2 py-1 rounded">{new Date(String(c.meta.created_at ?? "")).toLocaleString("zh-CN")}</span>
+                    <span className="bg-slate-800 px-2 py-1 rounded">{formatTime(String(c.meta.created_at ?? ""))}</span>
                   )}
                   {!!c.meta.desc && (
                     <span className="bg-slate-800 px-2 py-1 rounded">{String(c.meta.desc ?? "")}</span>
@@ -115,7 +116,7 @@ export default function CardDetail() {
               <div className="space-y-1">
                 {cardEvents.map((e) => (
                   <div key={e.id} className="flex items-center gap-3 text-xs text-slate-400 bg-slate-800/30 rounded px-2 py-1">
-                    <span>{new Date(e.timestamp).toLocaleString("zh-CN")}</span>
+                    <span>{formatTime(e.timestamp)}</span>
                     <span className="text-slate-500 font-mono">{e.type}</span>
                     <span>{e.title}</span>
                   </div>
