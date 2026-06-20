@@ -10,6 +10,8 @@ export interface CardData {
   meta: Record<string, unknown>;
   body: string;
   checkboxes: CheckboxItem[];
+  order?: number;
+  mtime_ms?: number;
 }
 
 export interface ColumnData {

@@ -56,7 +56,15 @@ export default function ColumnView({
     setEditingReadme(false);
   }
 
-  const visibleCards = col.cards.slice(0, cardPage * pageSize);
+  // 按 order → mtime → created_at 排序
+  const sortedCards = [...col.cards].sort((a, b) => {
+    const ao = a.order ?? -1; const bo = b.order ?? -1;
+    if (ao !== bo) return ao - bo;
+    const am = a.mtime_ms ?? 0; const bm = b.mtime_ms ?? 0;
+    if (am !== bm) return bm - am;
+    return ((b.meta.created_at as string) || "").localeCompare((a.meta.created_at as string) || "");
+  });
+  const visibleCards = sortedCards.slice(0, cardPage * pageSize);
   const totalCards = col.cards.length;
   const remaining = totalCards - visibleCards.length;
   const totalCbs = col.cards.reduce((s, c) => s + c.checkboxes.length, 0);
