@@ -19,18 +19,17 @@ import { readFileSync } from "node:fs";
 
 /**
  * 卡片移动到目标列之前。
- * backlog->todo: 必须有 checkbox 子任务
+ * 移动到 todo/doing/done: 必须有 checkbox 子任务
  * 移动到 done: 所有 checkbox 必须完成
  */
 export function before_item_move(ctx) {
-  // 从 backlog 移入 todo 前必须细化 checkbox
-  if (ctx.src_column === "backlog" && ctx.dest_column === "todo" && ctx.item_path) {
+  const cols_require_cb = ["todo", "doing", "done"];
+  if (cols_require_cb.includes(ctx.dest_column) && ctx.item_path) {
     try {
       const content = readFileSync(ctx.item_path, "utf-8");
-      // eslint-disable-next-line no-useless-escape
       const hasCb = /^- \[ |x\] /m.test(content);
       if (!hasCb) {
-        return { ok: false, message: "backlog 卡片移入 todo 前需细化 checkbox 子任务" };
+        return { ok: false, message: ctx.dest_column + " 列要求卡片必须有 checkbox 子任务，请先细化" };
       }
     } catch { /* 放行 */ }
   }
