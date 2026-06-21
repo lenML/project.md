@@ -1,58 +1,24 @@
-import { useKanbanStore } from '../../hooks/useKanbanStore';
+import { useKanban } from '../../hooks/useKanbanStore';
 import type { CardData } from '../../types';
 import { Search, X, Trash2 } from 'lucide-react';
 import TrashPanel from '../trash/TrashPanel';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import ColumnView from './ColumnView';
 
 export default function KanbanBoard() {
-  const { projects, view, setView, moveCard, writeMode, searchQuery, setSearchQuery, loadTrash, CARD_PAGE_SIZE } = useKanbanStore();
-  const project = projects.find((p) => p.name === view.project);
-  const kanban = project?.kanbans.find((k) => k.name === view.kanban);
+  const { view, setView, writeMode, searchQuery, setSearchQuery, loadTrash, CARD_PAGE_SIZE, kanban, displayedColumns, onDrop } = useKanban();
 
   if (!kanban) {
     return <div className="text-slate-500 text-sm text-center py-8">看板不存在</div>;
   }
 
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  
   const [cardPages, setCardPages] = useState<Record<string, number>>({});
   const [showTrash, setShowTrash] = useState(false);
-
-  function onDrop(colName: string) {
-    const cardJson = sessionStorage.getItem('drag-card');
-    setDragOverCol(null);
-    if (!cardJson || !view.project || !view.kanban) return;
-    const card: CardData = JSON.parse(cardJson);
-    if (colName === card.path.split('/').slice(-2, -1)[0]) return;
-    moveCard(view.project, view.kanban, card, colName);
-    sessionStorage.removeItem('drag-card');
-  }
-
-
 
   function loadMoreCards(colName: string) {
     setCardPages((prev) => ({ ...prev, [colName]: (prev[colName] || 1) + 1 }));
   }
-
-  const sortedColumns = useMemo(() => {
-    return [...kanban.columns].sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
-  }, [kanban.columns]);
-
-  const displayedColumns = useMemo(() => {
-    if (!searchQuery) return sortedColumns;
-    const q = searchQuery.toLowerCase();
-    return sortedColumns.map((col) => ({
-      ...col,
-      cards: col.cards.filter(
-        (c: CardData) =>
-          c.name.toLowerCase().includes(q) ||
-          String(c.meta.desc || '')
-            .toLowerCase()
-            .includes(q),
-      ),
-    }));
-  }, [sortedColumns, searchQuery]);
 
   return (
     <div className="flex flex-col h-full">
@@ -66,40 +32,27 @@ export default function KanbanBoard() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-              onClick={() => setSearchQuery('')}
-            >
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" onClick={() => setSearchQuery('')}>
               <X size={14} />
             </button>
           )}
-          <button
-            onClick={() => {
-              loadTrash(view.project!, view.kanban!);
-              setShowTrash(true);
-            }}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0"
-            title="回收站"
-          >
+          <button onClick={() => { loadTrash(view.project!, view.kanban!); setShowTrash(true); }}
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0" title="回收站">
             <Trash2 size={14} />
           </button>
         </div>
       )}
       <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
         {displayedColumns.map((col) => (
-          <ColumnView
-            key={col.name}
-            col={col}
+          <ColumnView key={col.name} col={col}
             onCardClick={(c: CardData) => setView({ card: c })}
-            onDrop={() => onDrop(col.name)}
+            onDrop={() => { setDragOverCol(null); onDrop(col.name); }}
             onDragOver={() => setDragOverCol(col.name)}
             onDragLeave={() => setDragOverCol(null)}
             isDragOver={dragOverCol === col.name}
             writeMode={writeMode}
-            projectName={view.project || ''}
-            kanbanName={view.kanban || ''}
-            cardPage={cardPages[col.name] || 1}
-            pageSize={CARD_PAGE_SIZE}
+            projectName={view.project || ''} kanbanName={view.kanban || ''}
+            cardPage={cardPages[col.name] || 1} pageSize={CARD_PAGE_SIZE}
             onLoadMore={() => loadMoreCards(col.name)}
           />
         ))}

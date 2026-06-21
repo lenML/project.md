@@ -1,6 +1,6 @@
-import { useEventStore } from "../../hooks/useEventStore";
+import { useEventLog } from "../../hooks/useEventStore";
 import { Terminal, Search, X, ChevronDown, ChevronUp } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import type { EventRecord } from "../../types";
 import { formatTime } from "../../utils/format";
 
@@ -24,21 +24,8 @@ function EventRow({ e }: { e: EventRecord }) {
 }
 
 export default function EventLog() {
-  const { events, logOpen, eventPage, eventFilter, loadMoreEvents, setEventFilter, toggleLog, EVENT_PAGE_SIZE } = useEventStore();
+  const { events, logOpen, eventFilter, loadMoreEvents, setEventFilter, toggleLog, visible, remaining } = useEventLog();
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const filtered = useMemo(() => {
-    if (!eventFilter) return events;
-    const q = eventFilter.toLowerCase();
-    return events.filter((e: EventRecord) =>
-      e.type.toLowerCase().includes(q) ||
-      e.title.toLowerCase().includes(q) ||
-      (e.content || "").toLowerCase().includes(q)
-    );
-  }, [events, eventFilter]);
-
-  const visible = filtered.slice(0, eventPage * EVENT_PAGE_SIZE);
-  const remaining = filtered.length - visible.length;
 
   if (!logOpen) {
     return (

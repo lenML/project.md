@@ -31,7 +31,7 @@ function CardEventRow({ e }: { e: EventRecord }) {
 }
 
 export default function CardDetail() {
-  const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, events } = useCardDetail();
+  const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, cardEvents } = useCardDetail();
   if (!card) return null;
   const c = card;
   const [editing, setEditing] = useState(false);
@@ -52,11 +52,6 @@ export default function CardDetail() {
     await updateCard(view.project, view.kanban, c, meta, editBody);
     setEditing(false);
   }
-
-  const cardEvents = events.filter((e) => {
-    const m = e.meta as Record<string, unknown> | undefined;
-    return (m?.item_name === c.name || (m?.file_path?.toString() || "").includes(c.path));
-  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 bg-black/60" onClick={closeCard}>
