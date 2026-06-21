@@ -52,22 +52,24 @@ export default function KanbanBoard() {
     setCardPages((prev) => ({ ...prev, [colName]: (prev[colName] || 1) + 1 }));
   }
 
-  const filteredColumns = useMemo(() => {
-    if (!searchQuery) return kanban.columns;
+  const sortedColumns = useMemo(() => {
+    return [...kanban.columns].sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+  }, [kanban.columns]);
+
+  const displayedColumns = useMemo(() => {
+    if (!searchQuery) return sortedColumns;
     const q = searchQuery.toLowerCase();
-    return [...kanban.columns]
-      .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999))
-      .map((col) => ({
-        ...col,
-        cards: col.cards.filter(
-          (c: CardData) =>
-            c.name.toLowerCase().includes(q) ||
-            String(c.meta.desc || '')
-              .toLowerCase()
-              .includes(q),
-        ),
-      }));
-  }, [kanban.columns, searchQuery]);
+    return sortedColumns.map((col) => ({
+      ...col,
+      cards: col.cards.filter(
+        (c: CardData) =>
+          c.name.toLowerCase().includes(q) ||
+          String(c.meta.desc || '')
+            .toLowerCase()
+            .includes(q),
+      ),
+    }));
+  }, [sortedColumns, searchQuery]);
 
   return (
     <div className="flex flex-col h-full">
@@ -101,7 +103,7 @@ export default function KanbanBoard() {
         </div>
       )}
       <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
-        {filteredColumns.map((col) => (
+        {displayedColumns.map((col) => (
           <ColumnView
             key={col.name}
             col={col}
