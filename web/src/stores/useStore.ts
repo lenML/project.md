@@ -172,7 +172,9 @@ export const useStore = create<AppStore>((set, get) => ({
       const oldName = parts[parts.length - 1];
       const newName = oldName.replace(/\.md$/, "") + "." + ts + ".md";
       const file = await createFile(trashDir, newName);
-      const content = await readTextFile(dir as unknown as FileSystemFileHandle);
+      const srcFile = await tryGetFile(dir, parts[parts.length - 1]);
+      if (!srcFile) return;
+      const content = await readTextFile(srcFile);
       await writeTextFile(file, content);
       await removeEntry(dir, parts[parts.length - 1]);
       await logWebEvent(rootHandle, proj, "item_trash", "移入回收站: " + card.name, { file_path: [proj, kanban, ".trash", newName].join("/") });
