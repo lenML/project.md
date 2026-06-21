@@ -80,7 +80,16 @@ export async function loadProjectData(root: FileSystemDirectoryHandle): Promise<
             const meta = parsed?.metadata ?? {};
             const body = parsed?.body ?? content;
             const name = (meta.name as string) || f.name.replace(/\.md$/, "");
-            cards.push({ name, path: [entry.name, k.name, c.name, f.name].join("/"), meta, body, checkboxes: parseCheckboxes(body) });
+            const fileObj = await (f.handle as FileSystemFileHandle).getFile();
+            cards.push({
+              name,
+              path: [entry.name, k.name, c.name, f.name].join("/"),
+              meta,
+              body,
+              checkboxes: parseCheckboxes(body),
+              mtime_ms: fileObj.lastModified,
+              order: (meta.order as number) ?? undefined,
+            });
           } catch { /* skip */ }
         }
         columns.push({ name: c.name, cards, readme: colReadme, order: colOrder });

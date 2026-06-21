@@ -2,6 +2,7 @@ import type { CardData } from "../../types";
 import { useStore } from "../../stores/useStore";
 import { CheckSquare2, Square, Plus } from "lucide-react";
 import { useState, useRef } from "react";
+import { parseFrontmatter } from "../../utils/markdown";
 
 interface ColumnViewProps {
   col: { name: string; cards: CardData[]; readme?: string };
@@ -129,7 +130,7 @@ export default function ColumnView({
         col.readme && (
           <div className="px-2 pt-1">
             <div className="text-xs text-slate-500 italic leading-relaxed line-clamp-3">
-              {col.readme.replace(/^#+/gm, "").trim()}
+              {(parseFrontmatter(col.readme)?.body ?? col.readme).replace(/^#+/gm, "").trim()}
             </div>
           </div>
         )
