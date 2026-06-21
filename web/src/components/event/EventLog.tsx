@@ -1,4 +1,4 @@
-import { useStore } from "../../stores/useStore";
+import { useEventStore } from "../../hooks/useEventStore";
 import { Terminal, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useRef } from "react";
 import type { EventRecord } from "../../types";
@@ -24,14 +24,7 @@ function EventRow({ e }: { e: EventRecord }) {
 }
 
 export default function EventLog() {
-  const events = useStore((s) => s.events);
-  const logOpen = useStore((s) => s.view.logOpen);
-  const eventPage = useStore((s) => s.eventPage);
-  const eventFilter = useStore((s) => s.eventFilter);
-  const loadMoreEvents = useStore((s) => s.loadMoreEvents);
-  const setEventFilter = useStore((s) => s.setEventFilter);
-  const toggleLog = useStore((s) => s.toggleLog);
-  const EVENT_PAGE_SIZE = useStore((s) => s.EVENT_PAGE_SIZE);
+  const { events, logOpen, eventPage, eventFilter, loadMoreEvents, setEventFilter, toggleLog, EVENT_PAGE_SIZE } = useEventStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {

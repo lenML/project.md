@@ -1,4 +1,4 @@
-import { useStore } from '../../stores/useStore';
+import { useKanbanStore } from '../../hooks/useKanbanStore';
 import type { CardData } from '../../types';
 import { Search, X, Trash2 } from 'lucide-react';
 import TrashPanel from '../trash/TrashPanel';
@@ -6,15 +6,7 @@ import { useState, useMemo } from 'react';
 import ColumnView from './ColumnView';
 
 export default function KanbanBoard() {
-  const projects = useStore((s) => s.projects);
-  const view = useStore((s) => s.view);
-  const setView = useStore((s) => s.setView);
-  const moveCard = useStore((s) => s.moveCard);
-  const writeMode = useStore((s) => s.writeMode);
-  const searchQuery = useStore((s) => s.searchQuery);
-  const setSearchQuery = useStore((s) => s.setSearchQuery);
-  const loadTrash = useStore((s) => s.loadTrash);
-  const CARD_PAGE_SIZE = useStore((s) => s.CARD_PAGE_SIZE);
+  const { projects, view, setView, moveCard, writeMode, searchQuery, setSearchQuery, loadTrash, CARD_PAGE_SIZE } = useKanbanStore();
   const project = projects.find((p) => p.name === view.project);
   const kanban = project?.kanbans.find((k) => k.name === view.kanban);
 

@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { useStore } from "../stores/useStore";
+import { useCardDetail } from "../hooks/useCardDetail";
 import { formatTime } from "../utils/format";
 import { X, CheckSquare2, Square, Edit3, Save, Trash2 } from "lucide-react";
 import type { CardData, EventRecord } from "../types";
 
-function CheckboxRow({ cb, writeMode }: { cb: CardData["checkboxes"][number]; writeMode: boolean }) {
-  const toggleCheckbox = useStore((s) => s.toggleCheckbox);
+function CheckboxRow({ cb, writeMode, onToggle }: {
+  cb: CardData["checkboxes"][number]; writeMode: boolean; onToggle: (hash: string) => void;
+}) {
   return (
     <div className="flex items-center gap-2 text-sm">
-      <button onClick={() => toggleCheckbox(cb.hash)}
+      <button onClick={() => onToggle(cb.hash)}
         className={"shrink-0 transition-colors " + (writeMode ? "cursor-pointer hover:opacity-80" : "cursor-default")}
         title={writeMode ? "切换" : "只读模式"} disabled={!writeMode}>
         {cb.checked ? <CheckSquare2 size={16} className="text-green-400" /> : <Square size={16} className="text-slate-500" />}
@@ -30,15 +31,9 @@ function CardEventRow({ e }: { e: EventRecord }) {
 }
 
 export default function CardDetail() {
-  const card = useStore((s) => s.view.card);
+  const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, events } = useCardDetail();
   if (!card) return null;
   const c = card;
-  const closeCard = useStore((s) => s.closeCard);
-  const view = useStore((s) => s.view);
-  const writeMode = useStore((s) => s.writeMode);
-  const updateCard = useStore((s) => s.updateCard);
-  const deleteCard = useStore((s) => s.deleteCard);
-  const events = useStore((s) => s.events);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
@@ -104,7 +99,7 @@ export default function CardDetail() {
                     Checklist ({c.checkboxes.filter((cbx) => cbx.checked).length + "/" + c.checkboxes.length})
                   </div>
                   <div className="space-y-1.5">
-                    {c.checkboxes.map((cb) => <CheckboxRow key={cb.hash} cb={cb} writeMode={writeMode} />)}
+                    {c.checkboxes.map((cb) => <CheckboxRow key={cb.hash} cb={cb} writeMode={writeMode} onToggle={toggleCheckbox} />)}
                   </div>
                 </div>
               )}
