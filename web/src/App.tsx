@@ -6,7 +6,7 @@ import KanbanBoard from './components/board/KanbanBoard';
 import EventLog from './components/event/EventLog';
 import CardDetail from './components/CardDetail';
 import ProjectReadme from './components/ProjectReadme';
-import { FolderOpen, Lock, Unlock } from 'lucide-react';
+import { FolderOpen, Github, Lock, Unlock } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { formatRelativeTime } from './utils/format';
 
@@ -81,6 +81,10 @@ export default function App() {
           {writeMode ? <Unlock size={14} /> : <Lock size={14} />}
           {writeMode ? '编辑中' : '只读'}
         </button>
+        <a href="https://github.com/lenML/project.md" target="_blank" rel="noopener noreferrer"
+          className="ml-auto text-slate-500 hover:text-slate-300 transition-colors" title="GitHub">
+          <Github size={18} />
+        </a>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
