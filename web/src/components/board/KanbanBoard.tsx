@@ -6,7 +6,18 @@ import { useState } from 'react';
 import ColumnView from './ColumnView';
 
 export default function KanbanBoard() {
-  const { view, setView, writeMode, searchQuery, setSearchQuery, loadTrash, CARD_PAGE_SIZE, kanban, displayedColumns, onDrop } = useKanban();
+  const {
+    view,
+    setView,
+    writeMode,
+    searchQuery,
+    setSearchQuery,
+    loadTrash,
+    CARD_PAGE_SIZE,
+    kanban,
+    displayedColumns,
+    onDrop,
+  } = useKanban();
 
   if (!kanban) {
     return <div className="text-slate-500 text-sm text-center py-8">看板不存在</div>;
@@ -32,27 +43,43 @@ export default function KanbanBoard() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300" onClick={() => setSearchQuery('')}>
+            <button
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              onClick={() => setSearchQuery('')}
+            >
               <X size={14} />
             </button>
           )}
-          <button onClick={() => { loadTrash(view.project!, view.kanban!); setShowTrash(true); }}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0" title="回收站">
+          <button
+            onClick={() => {
+              loadTrash(view.project!, view.kanban!);
+              setShowTrash(true);
+            }}
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0"
+            title="回收站"
+          >
             <Trash2 size={14} />
           </button>
         </div>
       )}
       <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
         {displayedColumns.map((col) => (
-          <ColumnView key={col.name} col={col}
+          <ColumnView
+            key={col.name}
+            col={col}
             onCardClick={(c: CardData) => setView({ card: c })}
-            onDrop={() => { setDragOverCol(null); onDrop(col.name); }}
+            onDrop={() => {
+              setDragOverCol(null);
+              onDrop(col.name);
+            }}
             onDragOver={() => setDragOverCol(col.name)}
             onDragLeave={() => setDragOverCol(null)}
             isDragOver={dragOverCol === col.name}
             writeMode={writeMode}
-            projectName={view.project || ''} kanbanName={view.kanban || ''}
-            cardPage={cardPages[col.name] || 1} pageSize={CARD_PAGE_SIZE}
+            projectName={view.project || ''}
+            kanbanName={view.kanban || ''}
+            cardPage={cardPages[col.name] || 1}
+            pageSize={CARD_PAGE_SIZE}
             onLoadMore={() => loadMoreCards(col.name)}
           />
         ))}

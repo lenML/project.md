@@ -1,14 +1,14 @@
-import { usePolling } from "./hooks/usePolling";
-import { useStore } from "./stores/useStore";
-import DirPicker from "./components/DirPicker";
-import Sidebar from "./components/Sidebar";
-import KanbanBoard from "./components/board/KanbanBoard";
-import EventLog from "./components/event/EventLog";
-import CardDetail from "./components/CardDetail";
-import ProjectReadme from "./components/ProjectReadme";
-import { FolderOpen, Lock, Unlock, RefreshCw } from "lucide-react";
-import { useRef, useEffect, useState } from "react";
-import { formatRelativeTime } from "./utils/format";
+import { usePolling } from './hooks/usePolling';
+import { useStore } from './stores/useStore';
+import DirPicker from './components/DirPicker';
+import Sidebar from './components/Sidebar';
+import KanbanBoard from './components/board/KanbanBoard';
+import EventLog from './components/event/EventLog';
+import CardDetail from './components/CardDetail';
+import ProjectReadme from './components/ProjectReadme';
+import { FolderOpen, Lock, Unlock } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { formatRelativeTime } from './utils/format';
 
 export default function App() {
   const rootHandle = useStore((s) => s.rootHandle);
@@ -39,30 +39,47 @@ export default function App() {
 
   usePolling(loadAll, !!rootHandle, 3000);
 
-  const dotColor = loading ? "#f59e0b" : "#22c55e";
-  
+  const dotColor = loading ? '#f59e0b' : '#22c55e';
 
   if (!rootHandle) return <DirPicker />;
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-slate-100">
       <header className="flex items-center gap-3 px-4 h-12 border-b border-slate-800 shrink-0">
-        <button onClick={selectDir} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100 transition-colors">
+        <button
+          onClick={selectDir}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100 transition-colors"
+        >
           <FolderOpen size={16} />
           <span className="truncate max-w-48">{useStore.getState().rootDir}</span>
         </button>
         <span className="text-slate-700">|</span>
-        <button onClick={loadAll} disabled={loading} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100 disabled:opacity-70 transition-colors" title={"最后刷新: " + new Date(now).toLocaleString("zh-CN")}>
-          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-          {loading && <RefreshCw size={12} className="animate-spin" />}
-          <span className="text-xs text-slate-600">{formatRelativeTime(new Date(lastRefreshTime.current).toISOString())}</span>
+        <button
+          onClick={loadAll}
+          disabled={loading}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100 disabled:opacity-70 transition-colors"
+          title={'最后刷新: ' + new Date(now).toLocaleString('zh-CN')}
+        >
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: dotColor }}
+          />
+          <span className="text-xs text-slate-600">
+            {formatRelativeTime(new Date(lastRefreshTime.current).toISOString())}
+          </span>
         </button>
-        <button onClick={toggleWriteMode}
-          className={"text-sm ml-2 flex items-center gap-1 px-3 py-1 rounded-full transition-colors " + (writeMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-100 border border-slate-700")}
-          title={writeMode ? "关闭编辑模式" : "开启编辑模式"}
+        <button
+          onClick={toggleWriteMode}
+          className={
+            'text-sm ml-2 flex items-center gap-1 px-3 py-1 rounded-full transition-colors ' +
+            (writeMode
+              ? 'bg-amber-600 text-white'
+              : 'text-slate-400 hover:text-slate-100 border border-slate-700')
+          }
+          title={writeMode ? '关闭编辑模式' : '开启编辑模式'}
         >
           {writeMode ? <Unlock size={14} /> : <Lock size={14} />}
-          {writeMode ? "编辑中" : "只读"}
+          {writeMode ? '编辑中' : '只读'}
         </button>
       </header>
 
@@ -70,17 +87,29 @@ export default function App() {
         <Sidebar projects={projects} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <main className="flex-1 overflow-auto p-4">
-            {error && <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>}
+            {error && (
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">
+                {error}
+              </div>
+            )}
             {loading && projects.length === 0 && (
               <div className="flex items-center justify-center h-48 text-slate-500">
                 <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse mr-2" /> 加载中...
               </div>
             )}
             {!loading && projects.length === 0 && !error && (
-              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">该目录下没有项目 (缺少 readme.md 的目录)</div>
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
+                该目录下没有项目 (缺少 readme.md 的目录)
+              </div>
             )}
-            {view.kanban ? <KanbanBoard /> : view.project ? <ProjectReadme /> : (
-              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">从左侧选择一个看板</div>
+            {view.kanban ? (
+              <KanbanBoard />
+            ) : view.project ? (
+              <ProjectReadme />
+            ) : (
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
+                从左侧选择一个看板
+              </div>
             )}
           </main>
           {(view.kanban || view.project) && <EventLog />}

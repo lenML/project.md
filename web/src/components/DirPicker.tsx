@@ -1,5 +1,5 @@
-import { useStore } from "../stores/useStore";
-import { FolderKanban } from "lucide-react";
+import { useStore } from '../stores/useStore';
+import { FolderKanban } from 'lucide-react';
 
 export default function DirPicker() {
   const selectDir = useStore((s) => s.selectDir);
@@ -9,7 +9,9 @@ export default function DirPicker() {
         <FolderKanban size={64} className="text-indigo-400" />
         <h1 className="text-2xl font-bold">Project.md Kanban</h1>
         <p className="text-sm text-slate-400 text-center max-w-md">
-          选择 <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">project.md</code> 根目录以查看看板内容
+          选择{' '}
+          <code className="bg-slate-800 px-1.5 py-0.5 rounded text-indigo-300">project.md</code>{' '}
+          根目录以查看看板内容
         </p>
         <button
           onClick={selectDir}

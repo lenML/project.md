@@ -1,11 +1,25 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 import {
-  readTextFile, tryGetDir, tryGetFile, listDirAll,
-  pickDirectory, writeTextFile, createFile, createDir, removeEntry,
-} from "../utils/fs";
-import { parseFrontmatter, buildFrontmatterDoc, toggleCheckboxByHash } from "../utils/markdown";
-import type { ProjectData, CardData, EventRecord, ViewState } from "../types";
-import { loadProjectData, loadEventsFromDir, logWebEvent, shortHash, saveView, loadView } from "./data-loader";
+  readTextFile,
+  tryGetDir,
+  tryGetFile,
+  listDirAll,
+  pickDirectory,
+  writeTextFile,
+  createFile,
+  createDir,
+  removeEntry,
+} from '../utils/fs';
+import { parseFrontmatter, buildFrontmatterDoc, toggleCheckboxByHash } from '../utils/markdown';
+import type { ProjectData, CardData, EventRecord, ViewState } from '../types';
+import {
+  loadProjectData,
+  loadEventsFromDir,
+  logWebEvent,
+  shortHash,
+  saveView,
+  loadView,
+} from './data-loader';
 
 interface AppStore {
   rootDir: string;
@@ -34,12 +48,30 @@ interface AppStore {
   toggleLog: () => void;
 
   // write actions
-  createCard: (proj: string, kanban: string, col: string, name: string, desc?: string) => Promise<void>;
+  createCard: (
+    proj: string,
+    kanban: string,
+    col: string,
+    name: string,
+    desc?: string,
+  ) => Promise<void>;
   deleteCard: (proj: string, kanban: string, card: CardData) => Promise<void>;
   moveCard: (proj: string, kanban: string, card: CardData, destCol: string) => Promise<void>;
-  updateCard: (proj: string, kanban: string, card: CardData, meta: Record<string, unknown>, body: string) => Promise<void>;
+  updateCard: (
+    proj: string,
+    kanban: string,
+    card: CardData,
+    meta: Record<string, unknown>,
+    body: string,
+  ) => Promise<void>;
   toggleCheckbox: (hash: string) => Promise<void>;
-  reorderCard: (proj: string, kanban: string, col: string, card: CardData, newIndex: number) => Promise<void>;
+  reorderCard: (
+    proj: string,
+    kanban: string,
+    col: string,
+    card: CardData,
+    newIndex: number,
+  ) => Promise<void>;
   trashItems: Array<{ name: string; path: string; originalName: string }>;
   loadTrash: (proj: string, kanban: string) => Promise<void>;
   restoreFromTrash: (proj: string, kanban: string, col: string, trashPath: string) => Promise<void>;
@@ -49,7 +81,7 @@ interface AppStore {
 }
 
 export const useStore = create<AppStore>((set, get) => ({
-  rootDir: "",
+  rootDir: '',
   rootHandle: null,
   projects: [],
   events: [],
@@ -58,8 +90,8 @@ export const useStore = create<AppStore>((set, get) => ({
   loading: false,
   writeMode: false,
   error: null,
-  searchQuery: "",
-  eventFilter: "",
+  searchQuery: '',
+  eventFilter: '',
   eventPage: 1,
   EVENT_PAGE_SIZE: 50,
   CARD_PAGE_SIZE: 50,
@@ -67,10 +99,15 @@ export const useStore = create<AppStore>((set, get) => ({
   selectDir: async () => {
     try {
       const handle = await pickDirectory(true);
-      set({ rootHandle: handle, rootDir: handle.name, error: null, view: { project: null, kanban: null, card: null, logOpen: false } });
+      set({
+        rootHandle: handle,
+        rootDir: handle.name,
+        error: null,
+        view: { project: null, kanban: null, card: null, logOpen: false },
+      });
       await get().loadAll();
     } catch (e: unknown) {
-      if ((e as DOMException).name === "AbortError") return;
+      if ((e as DOMException).name === 'AbortError') return;
       set({ error: e instanceof Error ? e.message : String(e) });
     }
   },
@@ -87,7 +124,11 @@ export const useStore = create<AppStore>((set, get) => ({
       const cur = get().view;
       if (!cur.project && saved && saved.rootDir === get().rootDir) {
         const projExists = projects.some((p) => p.name === saved.project);
-        const kanbanExists = projExists && projects.find((p) => p.name === saved.project)?.kanbans.some((k) => k.name === saved.kanban);
+        const kanbanExists =
+          projExists &&
+          projects
+            .find((p) => p.name === saved.project)
+            ?.kanbans.some((k) => k.name === saved.kanban);
         if (kanbanExists) {
           set({ view: { ...get().view, project: saved.project, kanban: saved.kanban } });
         } else if (projExists) {
@@ -108,17 +149,18 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     const events = await loadEventsFromDir(rootHandle, projectName);
-    set({ events, eventPage: 1, eventFilter: "" });
+    set({ events, eventPage: 1, eventFilter: '' });
   },
 
-  setView: (v) => set((s) => {
-    const newView = { ...s.view, ...v };
-    // 持久化 project/kanban 选择
-    if (v.project !== undefined || v.kanban !== undefined) {
-      saveView(newView, s.rootDir);
-    }
-    return { view: newView };
-  }),
+  setView: (v) =>
+    set((s) => {
+      const newView = { ...s.view, ...v };
+      // 持久化 project/kanban 选择
+      if (v.project !== undefined || v.kanban !== undefined) {
+        saveView(newView, s.rootDir);
+      }
+      return { view: newView };
+    }),
   closeCard: () => set((s) => ({ view: { ...s.view, card: null } })),
   toggleWriteMode: () => set((s) => ({ writeMode: !s.writeMode })),
   setSearchQuery: (q: string) => set({ searchQuery: q }),
@@ -138,13 +180,17 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!colDir) return;
       const now = new Date().toISOString();
       const id = shortHash(name + now);
-      const safeName = name.replace(/[\s<>:"/\\|?*]/g, "_");
+      const safeName = name.replace(/[\s<>:"/\\|?*]/g, '_');
       const meta: Record<string, unknown> = { id, name, created_at: now };
       if (desc) meta.desc = desc;
-      const content = buildFrontmatterDoc(meta, desc || "");
-      const file = await createFile(colDir, safeName + ".md");
+      const content = buildFrontmatterDoc(meta, desc || '');
+      const file = await createFile(colDir, safeName + '.md');
       await writeTextFile(file, content);
-      await logWebEvent(rootHandle, proj, "item_create", "创建卡片: " + name, { item_name: name, column: col, file_path: [proj, kanban, col, safeName + ".md"].join("/") });
+      await logWebEvent(rootHandle, proj, 'item_create', '创建卡片: ' + name, {
+        item_name: name,
+        column: col,
+        file_path: [proj, kanban, col, safeName + '.md'].join('/'),
+      });
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -155,7 +201,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
-      const parts = card.path.split("/");
+      const parts = card.path.split('/');
       let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
         const next = await tryGetDir(dir, parts[i]);
@@ -166,18 +212,20 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!projDir) return;
       const kanbanDir = await tryGetDir(projDir, kanban);
       if (!kanbanDir) return;
-      let trash_dir = await tryGetDir(kanbanDir, ".trash");
-      if (!trash_dir) trash_dir = await createDir(kanbanDir, ".trash");
+      let trash_dir = await tryGetDir(kanbanDir, '.trash');
+      if (!trash_dir) trash_dir = await createDir(kanbanDir, '.trash');
       const ts = Date.now().toString(36);
       const oldName = parts[parts.length - 1];
-      const newName = oldName.replace(/\.md$/, "") + "." + ts + ".md";
+      const newName = oldName.replace(/\.md$/, '') + '.' + ts + '.md';
       const file = await createFile(trash_dir, newName);
       const srcFile = await tryGetFile(dir, parts[parts.length - 1]);
       if (!srcFile) return;
       const content = await readTextFile(srcFile);
       await writeTextFile(file, content);
       await removeEntry(dir, parts[parts.length - 1]);
-      await logWebEvent(rootHandle, proj, "item_trash", "移入回收站: " + card.name, { file_path: [proj, kanban, ".trash", newName].join("/") });
+      await logWebEvent(rootHandle, proj, 'item_trash', '移入回收站: ' + card.name, {
+        file_path: [proj, kanban, '.trash', newName].join('/'),
+      });
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -194,7 +242,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!kanbanDir) return;
       const destDir = await tryGetDir(kanbanDir, destCol);
       if (!destDir) return;
-      const parts = card.path.split("/");
+      const parts = card.path.split('/');
       const fileName = parts[parts.length - 1];
       let src_dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -208,7 +256,11 @@ export const useStore = create<AppStore>((set, get) => ({
       const destFile = await createFile(destDir, fileName);
       await writeTextFile(destFile, content);
       await removeEntry(src_dir, fileName);
-      await logWebEvent(rootHandle, proj, "item_move", "移动卡片: " + card.name, { from: parts[parts.length - 2], to: destCol, file_path: [proj, kanban, destCol, fileName].join("/") });
+      await logWebEvent(rootHandle, proj, 'item_move', '移动卡片: ' + card.name, {
+        from: parts[parts.length - 2],
+        to: destCol,
+        file_path: [proj, kanban, destCol, fileName].join('/'),
+      });
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -219,7 +271,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
-      const parts = card.path.split("/");
+      const parts = card.path.split('/');
       let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
         const next = await tryGetDir(dir, parts[i]);
@@ -230,7 +282,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!file) return;
       const content = buildFrontmatterDoc(meta, body);
       await writeTextFile(file, content);
-      await logWebEvent(rootHandle, proj, "item_update", "编辑卡片: " + card.name);
+      await logWebEvent(rootHandle, proj, 'item_update', '编辑卡片: ' + card.name);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -242,7 +294,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const card = view.card;
     if (!rootHandle || !card) return;
     try {
-      const parts = card.path.split("/");
+      const parts = card.path.split('/');
       let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
         const next = await tryGetDir(dir, parts[i]);
@@ -261,8 +313,8 @@ export const useStore = create<AppStore>((set, get) => ({
       const newContent = buildFrontmatterDoc(parsed.metadata, newBody);
       await writeTextFile(file, newContent);
 
-      const projName = card.path.split("/")[0];
-      await logWebEvent(rootHandle, projName, "checkbox_toggle", "切换 checkbox: " + card.name);
+      const projName = card.path.split('/')[0];
+      await logWebEvent(rootHandle, projName, 'checkbox_toggle', '切换 checkbox: ' + card.name);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -279,9 +331,9 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!kanbanDir) return;
       const colDir = await tryGetDir(kanbanDir, col);
       if (!colDir) return;
-      const readme = await createFile(colDir, "readme.md");
+      const readme = await createFile(colDir, 'readme.md');
       await writeTextFile(readme, content);
-      await logWebEvent(rootHandle, proj, "column_update", "更新列 readme: " + col);
+      await logWebEvent(rootHandle, proj, 'column_update', '更新列 readme: ' + col);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -294,9 +346,9 @@ export const useStore = create<AppStore>((set, get) => ({
     try {
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) return;
-      const readme = await createFile(projDir, "readme.md");
+      const readme = await createFile(projDir, 'readme.md');
       await writeTextFile(readme, content);
-      await logWebEvent(rootHandle, proj, "project_update", "更新 readme: " + proj);
+      await logWebEvent(rootHandle, proj, 'project_update', '更新 readme: ' + proj);
       await get().loadAll();
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });
@@ -314,13 +366,19 @@ export const useStore = create<AppStore>((set, get) => ({
       const colDir = await tryGetDir(kanbanDir, col);
       if (!colDir) return;
       const entries = await listDirAll(colDir);
-      const mdFiles = entries.filter((e) => !e.isDir && e.name.endsWith('.md') && e.name !== 'readme.md');
+      const mdFiles = entries.filter(
+        (e) => !e.isDir && e.name.endsWith('.md') && e.name !== 'readme.md',
+      );
       mdFiles.sort((a, b) => a.name.localeCompare(b.name));
       const cardName = card.path.split('/').pop() || '';
       const withoutTarget = mdFiles.filter((e) => e.name !== cardName);
       const target = mdFiles.find((e) => e.name === cardName);
       if (!target) return;
-      const reordered = [...withoutTarget.slice(0, newIndex), target, ...withoutTarget.slice(newIndex)];
+      const reordered = [
+        ...withoutTarget.slice(0, newIndex),
+        target,
+        ...withoutTarget.slice(newIndex),
+      ];
       for (let i = 0; i < reordered.length; i++) {
         const fh = reordered[i];
         if (!fh) continue;
@@ -328,7 +386,10 @@ export const useStore = create<AppStore>((set, get) => ({
         const parsed = parseFrontmatter(raw);
         if (!parsed) continue;
         const meta = { ...parsed.metadata, order: i };
-        await writeTextFile(fh.handle as FileSystemFileHandle, buildFrontmatterDoc(meta, parsed.body));
+        await writeTextFile(
+          fh.handle as FileSystemFileHandle,
+          buildFrontmatterDoc(meta, parsed.body),
+        );
       }
       await logWebEvent(rootHandle, proj, 'item_reorder', '重新排序: ' + col);
       await get().loadAll();
@@ -345,16 +406,23 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!projDir) return;
       const kanbanDir = await tryGetDir(projDir, kanban);
       if (!kanbanDir) return;
-      const trash_dir = await tryGetDir(kanbanDir, ".trash");
-      if (!trash_dir) { set({ trashItems: [] }); return; }
+      const trash_dir = await tryGetDir(kanbanDir, '.trash');
+      if (!trash_dir) {
+        set({ trashItems: [] });
+        return;
+      }
       const entries = await listDirAll(trash_dir);
       const items: Array<{ name: string; path: string; originalName: string }> = [];
       for (const e of entries) {
-        if (!e.isDir && e.name.endsWith(".md") && e.name !== "readme.md") {
-          const base = e.name.replace(/.w+.md$/, "").replace(/.md$/, "");
-          const fileParts = e.name.split(".");
-          const originalName = fileParts.length > 2 ? fileParts.slice(0, -2).join(".") : base;
-          items.push({ name: originalName, path: [proj, kanban, ".trash", e.name].join("/"), originalName });
+        if (!e.isDir && e.name.endsWith('.md') && e.name !== 'readme.md') {
+          const base = e.name.replace(/.w+.md$/, '').replace(/.md$/, '');
+          const fileParts = e.name.split('.');
+          const originalName = fileParts.length > 2 ? fileParts.slice(0, -2).join('.') : base;
+          items.push({
+            name: originalName,
+            path: [proj, kanban, '.trash', e.name].join('/'),
+            originalName,
+          });
         }
       }
       set({ trashItems: items });
@@ -367,7 +435,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
-      const parts = trashPath.split("/");
+      const parts = trashPath.split('/');
       const fileName = parts[parts.length - 1];
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) return;
@@ -384,11 +452,11 @@ export const useStore = create<AppStore>((set, get) => ({
       const file = await tryGetFile(trash_dir, fileName);
       if (!file) return;
       const content = await readTextFile(file);
-      const cleanName = fileName.replace(/.w+.md$/, ".md");
+      const cleanName = fileName.replace(/.w+.md$/, '.md');
       const destFile = await createFile(colDir, cleanName);
       await writeTextFile(destFile, content);
       await removeEntry(trash_dir, fileName);
-      await logWebEvent(rootHandle, proj, "item_create", "恢复卡片: " + cleanName);
+      await logWebEvent(rootHandle, proj, 'item_create', '恢复卡片: ' + cleanName);
       await get().loadTrash(proj, kanban);
       await get().loadAll();
     } catch (e: unknown) {
@@ -400,7 +468,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
-      const parts = trashPath.split("/");
+      const parts = trashPath.split('/');
       const fileName = parts[parts.length - 1];
       let dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -411,7 +479,7 @@ export const useStore = create<AppStore>((set, get) => ({
       await removeEntry(dir, fileName);
       const proj = parts[0];
       const kanban = parts[1];
-      await logWebEvent(rootHandle, proj, "item_delete", "永久删除: " + fileName);
+      await logWebEvent(rootHandle, proj, 'item_delete', '永久删除: ' + fileName);
       await get().loadTrash(proj, kanban);
     } catch (e: unknown) {
       set({ error: e instanceof Error ? e.message : String(e) });

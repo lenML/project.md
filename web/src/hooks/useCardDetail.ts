@@ -1,5 +1,5 @@
-import { useStore } from "../stores/useStore";
-import { useMemo } from "react";
+import { useStore } from '../stores/useStore';
+import { useMemo } from 'react';
 
 export function useCardDetail() {
   const card = useStore((s) => s.view.card);
@@ -15,9 +15,19 @@ export function useCardDetail() {
     if (!card) return [];
     return events.filter((e) => {
       const m = e.meta as Record<string, unknown> | undefined;
-      return (m?.item_name === card.name || (m?.file_path?.toString() || "").includes(card.path));
+      return m?.item_name === card.name || (m?.file_path?.toString() || '').includes(card.path);
     });
   }, [events, card]);
 
-  return { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, events, cardEvents };
+  return {
+    card,
+    closeCard,
+    view,
+    writeMode,
+    updateCard,
+    deleteCard,
+    toggleCheckbox,
+    events,
+    cardEvents,
+  };
 }

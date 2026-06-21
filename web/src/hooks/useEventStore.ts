@@ -1,6 +1,6 @@
-import { useStore } from "../stores/useStore";
-import { useMemo } from "react";
-import type { EventRecord } from "../types";
+import { useStore } from '../stores/useStore';
+import { useMemo } from 'react';
+import type { EventRecord } from '../types';
 
 export function useEventLog() {
   const events = useStore((s) => s.events);
@@ -15,15 +15,28 @@ export function useEventLog() {
   const filtered = useMemo(() => {
     if (!eventFilter) return events;
     const q = eventFilter.toLowerCase();
-    return events.filter((e: EventRecord) =>
-      e.type.toLowerCase().includes(q) ||
-      e.title.toLowerCase().includes(q) ||
-      (e.content || "").toLowerCase().includes(q),
+    return events.filter(
+      (e: EventRecord) =>
+        e.type.toLowerCase().includes(q) ||
+        e.title.toLowerCase().includes(q) ||
+        (e.content || '').toLowerCase().includes(q),
     );
   }, [events, eventFilter]);
 
   const visible = filtered.slice(0, eventPage * EVENT_PAGE_SIZE);
   const remaining = filtered.length - visible.length;
 
-  return { events, logOpen, eventPage, eventFilter, loadMoreEvents, setEventFilter, toggleLog, EVENT_PAGE_SIZE, filtered, visible, remaining };
+  return {
+    events,
+    logOpen,
+    eventPage,
+    eventFilter,
+    loadMoreEvents,
+    setEventFilter,
+    toggleLog,
+    EVENT_PAGE_SIZE,
+    filtered,
+    visible,
+    remaining,
+  };
 }
