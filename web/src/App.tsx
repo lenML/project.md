@@ -6,7 +6,9 @@ import KanbanBoard from "./components/board/KanbanBoard";
 import EventLog from "./components/event/EventLog";
 import CardDetail from "./components/CardDetail";
 import ProjectReadme from "./components/ProjectReadme";
-import { FolderOpen, Loader2, Lock, Unlock } from "lucide-react";
+import { FolderOpen, Lock, Unlock, RefreshCw } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { formatRelativeTime } from "./utils/format";
 
 export default function App() {
   const rootHandle = useStore((s) => s.rootHandle);
@@ -18,7 +20,27 @@ export default function App() {
   const loadAll = useStore((s) => s.loadAll);
   const selectDir = useStore((s) => s.selectDir);
   const toggleWriteMode = useStore((s) => s.toggleWriteMode);
+  const lastRefreshTime = useRef(Date.now());
+  const [now, setNow] = useState(Date.now());
+  const prevLoading = useRef(loading);
+
+  useEffect(() => {
+    if (prevLoading.current && !loading) {
+      lastRefreshTime.current = Date.now();
+    }
+    prevLoading.current = loading;
+  }, [loading]);
+
+  // tick every 10s to update relative time
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(id);
+  }, []);
+
   usePolling(loadAll, !!rootHandle, 3000);
+
+  const dotColor = loading ? "#f59e0b" : "#22c55e";
+  
 
   if (!rootHandle) return <DirPicker />;
 
@@ -30,11 +52,12 @@ export default function App() {
           <span className="truncate max-w-48">{useStore.getState().rootDir}</span>
         </button>
         <span className="text-slate-700">|</span>
-        <button onClick={loadAll} disabled={loading} className="text-sm text-slate-400 hover:text-slate-100 disabled:opacity-50 transition-colors">
-          {loading ? <Loader2 size={16} className="animate-spin" /> : "刷新"}
+        <button onClick={loadAll} disabled={loading} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-100 disabled:opacity-70 transition-colors" title={"最后刷新: " + new Date(now).toLocaleString("zh-CN")}>
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+          {loading && <RefreshCw size={12} className="animate-spin" />}
+          <span className="text-xs text-slate-600">{formatRelativeTime(new Date(lastRefreshTime.current).toISOString())}</span>
         </button>
-        <button
-          onClick={toggleWriteMode}
+        <button onClick={toggleWriteMode}
           className={"text-sm ml-2 flex items-center gap-1 px-3 py-1 rounded-full transition-colors " + (writeMode ? "bg-amber-600 text-white" : "text-slate-400 hover:text-slate-100 border border-slate-700")}
           title={writeMode ? "关闭编辑模式" : "开启编辑模式"}
         >
@@ -47,33 +70,22 @@ export default function App() {
         <Sidebar projects={projects} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <main className="flex-1 overflow-auto p-4">
-            {error && (
-              <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>
-            )}
+            {error && <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg text-sm text-red-300">{error}</div>}
             {loading && projects.length === 0 && (
               <div className="flex items-center justify-center h-48 text-slate-500">
-                <Loader2 size={24} className="animate-spin mr-2" /> 加载中...
+                <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse mr-2" /> 加载中...
               </div>
             )}
             {!loading && projects.length === 0 && !error && (
-              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-                该目录下没有项目 (缺少 readme.md 的目录)
-              </div>
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">该目录下没有项目 (缺少 readme.md 的目录)</div>
             )}
-            {view.kanban ? (
-              <KanbanBoard />
-            ) : view.project ? (
-              <ProjectReadme />
-            ) : (
-              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">
-                从左侧选择一个看板
-              </div>
+            {view.kanban ? <KanbanBoard /> : view.project ? <ProjectReadme /> : (
+              <div className="flex items-center justify-center h-48 text-slate-500 text-sm">从左侧选择一个看板</div>
             )}
           </main>
           {(view.kanban || view.project) && <EventLog />}
         </div>
       </div>
-
       {view.card && <CardDetail />}
     </div>
   );
