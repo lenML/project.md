@@ -12,6 +12,17 @@ const TYPE_COLORS: Record<string, string> = {
   checkbox_toggle: "text-purple-400",
 };
 
+function EventRow({ e }: { e: EventRecord }) {
+  return (
+    <div className="flex items-start gap-3 px-4 py-1.5 hover:bg-slate-800/30 transition-colors border-b border-slate-800/30 last:border-0">
+      <span className="text-slate-600 shrink-0 w-28">{formatTime(e.timestamp)}</span>
+      <span className={"shrink-0 w-20 " + (TYPE_COLORS[e.type] || "text-slate-500")}>{e.type}</span>
+      <span className="text-slate-300 truncate">{e.title}</span>
+      {e.content && <span className="text-slate-500 ml-auto shrink-0 truncate max-w-48">{e.content}</span>}
+    </div>
+  );
+}
+
 export default function EventLog() {
   const events = useStore((s) => s.events);
   const logOpen = useStore((s) => s.view.logOpen);
@@ -57,12 +68,8 @@ export default function EventLog() {
         </button>
         <div className="relative ml-auto">
           <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600" />
-          <input
-            className="w-48 bg-slate-900 border border-slate-700 rounded pl-6 pr-6 py-1 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50"
-            placeholder="筛选事件..."
-            value={eventFilter}
-            onChange={(e) => setEventFilter(e.target.value)}
-          />
+          <input className="w-48 bg-slate-900 border border-slate-700 rounded pl-6 pr-6 py-1 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/50"
+            placeholder="筛选事件..." value={eventFilter} onChange={(e) => setEventFilter(e.target.value)} />
           {eventFilter && (
             <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400" onClick={() => setEventFilter("")}>
               <X size={12} />
@@ -71,17 +78,8 @@ export default function EventLog() {
         </div>
       </div>
       <div className="max-h-64 overflow-y-auto font-mono text-xs">
-        {visible.length === 0 && (
-          <div className="text-slate-600 text-center py-4">无匹配事件</div>
-        )}
-        {visible.map((e: EventRecord) => (
-          <div key={e.id} className="flex items-start gap-3 px-4 py-1.5 hover:bg-slate-800/30 transition-colors border-b border-slate-800/30 last:border-0">
-            <span className="text-slate-600 shrink-0 w-28">{formatTime(e.timestamp)}</span>
-            <span className={"shrink-0 w-20 " + (TYPE_COLORS[e.type] || "text-slate-500")}>{e.type}</span>
-            <span className="text-slate-300 truncate">{e.title}</span>
-            {e.content && <span className="text-slate-500 ml-auto shrink-0 truncate max-w-48">{e.content}</span>}
-          </div>
-        ))}
+        {visible.length === 0 && <div className="text-slate-600 text-center py-4">无匹配事件</div>}
+        {visible.map((e) => <EventRow key={e.id} e={e} />)}
         {remaining > 0 && (
           <button onClick={loadMoreEvents}
             className="w-full text-center text-indigo-400/70 hover:text-indigo-300 py-2 transition-colors border-t border-slate-800/30">

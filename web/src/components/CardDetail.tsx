@@ -2,6 +2,32 @@ import { useState } from "react";
 import { useStore } from "../stores/useStore";
 import { formatTime } from "../utils/format";
 import { X, CheckSquare2, Square, Edit3, Save, Trash2 } from "lucide-react";
+import type { CardData, EventRecord } from "../types";
+
+function CheckboxRow({ cb, writeMode }: { cb: CardData["checkboxes"][number]; writeMode: boolean }) {
+  const toggleCheckbox = useStore((s) => s.toggleCheckbox);
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <button onClick={() => toggleCheckbox(cb.hash)}
+        className={"shrink-0 transition-colors " + (writeMode ? "cursor-pointer hover:opacity-80" : "cursor-default")}
+        title={writeMode ? "切换" : "只读模式"} disabled={!writeMode}>
+        {cb.checked ? <CheckSquare2 size={16} className="text-green-400" /> : <Square size={16} className="text-slate-500" />}
+      </button>
+      <span className={cb.checked ? "text-slate-400 line-through" : "text-slate-200"}>{cb.text}</span>
+      <span className="text-xs text-slate-600 font-mono">#{cb.hash}</span>
+    </div>
+  );
+}
+
+function CardEventRow({ e }: { e: EventRecord }) {
+  return (
+    <div key={e.id} className="flex items-center gap-3 text-xs text-slate-400 bg-slate-800/30 rounded px-2 py-1">
+      <span>{formatTime(e.timestamp)}</span>
+      <span className="text-slate-500 font-mono">{e.type}</span>
+      <span>{e.title}</span>
+    </div>
+  );
+}
 
 export default function CardDetail() {
   const card = useStore((s) => s.view.card);
@@ -12,7 +38,6 @@ export default function CardDetail() {
   const writeMode = useStore((s) => s.writeMode);
   const updateCard = useStore((s) => s.updateCard);
   const deleteCard = useStore((s) => s.deleteCard);
-  const toggleCheckbox = useStore((s) => s.toggleCheckbox);
   const events = useStore((s) => s.events);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
@@ -69,12 +94,8 @@ export default function CardDetail() {
               {!!c.meta.id && (
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">#{String(c.meta.id ?? "")}</span>
-                  {!!c.meta.created_at && (
-                    <span className="bg-slate-800 px-2 py-1 rounded">{formatTime(String(c.meta.created_at ?? ""))}</span>
-                  )}
-                  {!!c.meta.desc && (
-                    <span className="bg-slate-800 px-2 py-1 rounded">{String(c.meta.desc ?? "")}</span>
-                  )}
+                  {!!c.meta.created_at && <span className="bg-slate-800 px-2 py-1 rounded">{formatTime(String(c.meta.created_at ?? ""))}</span>}
+                  {!!c.meta.desc && <span className="bg-slate-800 px-2 py-1 rounded">{String(c.meta.desc ?? "")}</span>}
                 </div>
               )}
               {c.checkboxes.length > 0 && (
@@ -83,20 +104,7 @@ export default function CardDetail() {
                     Checklist ({c.checkboxes.filter((cbx) => cbx.checked).length + "/" + c.checkboxes.length})
                   </div>
                   <div className="space-y-1.5">
-                    {c.checkboxes.map((cb) => (
-                      <div key={cb.hash} className="flex items-center gap-2 text-sm">
-                        <button
-                          onClick={() => toggleCheckbox(cb.hash)}
-                          className={"shrink-0 transition-colors " + (writeMode ? "cursor-pointer hover:opacity-80" : "cursor-default")}
-                          title={writeMode ? "切换" : "只读模式"}
-                          disabled={!writeMode}
-                        >
-                          {cb.checked ? <CheckSquare2 size={16} className="text-green-400" /> : <Square size={16} className="text-slate-500" />}
-                        </button>
-                        <span className={cb.checked ? "text-slate-400 line-through" : "text-slate-200"}>{cb.text}</span>
-                        <span className="text-xs text-slate-600 font-mono">#{cb.hash}</span>
-                      </div>
-                    ))}
+                    {c.checkboxes.map((cb) => <CheckboxRow key={cb.hash} cb={cb} writeMode={writeMode} />)}
                   </div>
                 </div>
               )}
@@ -110,18 +118,8 @@ export default function CardDetail() {
           )}
           {cardEvents.length > 0 && !editing && (
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                相关操作 ({cardEvents.length})
-              </div>
-              <div className="space-y-1">
-                {cardEvents.map((e) => (
-                  <div key={e.id} className="flex items-center gap-3 text-xs text-slate-400 bg-slate-800/30 rounded px-2 py-1">
-                    <span>{formatTime(e.timestamp)}</span>
-                    <span className="text-slate-500 font-mono">{e.type}</span>
-                    <span>{e.title}</span>
-                  </div>
-                ))}
-              </div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">相关操作 ({cardEvents.length})</div>
+              <div className="space-y-1">{cardEvents.map((e) => <CardEventRow key={e.id} e={e} />)}</div>
             </div>
           )}
         </div>
