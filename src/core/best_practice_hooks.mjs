@@ -6,8 +6,8 @@ const COLS = ["idea", "backlog", "todo", "doing", "done"];
 // 允许的移动规则: src_col -> [dest_cols]
 // todo => doing => done 严格单向，不能跳列/回退
 const ALLOWED_MOVES = {
-  idea:     ["backlog", "todo", "doing", "done"],
-  backlog:  ["todo", "doing", "done"],
+  idea:     ["backlog", "todo", "doing"],
+  backlog:  ["todo", "doing"],
   todo:     ["doing"],
   doing:    ["done"],
   done:     [],
@@ -25,7 +25,7 @@ export function before_item_move(ctx) {
     const msg = ctx.source_column === ctx.dest_column
       ? "卡片已在 " + ctx.dest_column + " 列"
       : "不允许从 " + ctx.source_column + " 移动到 " + ctx.dest_column + "。仅允许: "
-        + "idea/backlog 可向前推进, todo→doing, doing→done";
+        + "idea→backlog/todo/doing, backlog→todo/doing, todo→doing, doing→done";
     return { ok: false, message: msg };
   }
 
