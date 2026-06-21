@@ -1,6 +1,6 @@
 import { useStore } from "../../stores/useStore";
 import { Terminal, Search, X, ChevronDown, ChevronUp } from "lucide-react";
-import { useState, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import type { EventRecord } from "../../types";
 import { formatTime } from "../../utils/format";
 

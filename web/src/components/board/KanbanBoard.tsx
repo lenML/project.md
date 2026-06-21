@@ -23,7 +23,7 @@ export default function KanbanBoard() {
   }
 
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const [touchCard, setTouchCard] = useState<CardData | null>(null);
+  
   const [cardPages, setCardPages] = useState<Record<string, number>>({});
   const [showTrash, setShowTrash] = useState(false);
 
@@ -37,16 +37,7 @@ export default function KanbanBoard() {
     sessionStorage.removeItem('drag-card');
   }
 
-  function touchDrop(colName: string) {
-    if (!touchCard || !view.project || !view.kanban) return;
-    const cur = touchCard.path.split('/').slice(-2, -1)[0];
-    if (colName === cur) {
-      setTouchCard(null);
-      return;
-    }
-    moveCard(view.project, view.kanban, touchCard, colName);
-    setTouchCard(null);
-  }
+
 
   function loadMoreCards(colName: string) {
     setCardPages((prev) => ({ ...prev, [colName]: (prev[colName] || 1) + 1 }));

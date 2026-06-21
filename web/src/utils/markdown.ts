@@ -46,9 +46,9 @@ export interface CheckboxItem {
  */
 export function toggleCheckboxByHash(content: string, hash: string): string | null {
   const lines = content.split("\n");
-  let targetIdx = -1;
-  let targetChecked = false;
-  let targetDepth = 0;
+  let target_idx = -1;
+  let target_checked = false;
+  let target_depth = 0;
 
   // 找 hash 匹配的行
   for (let i = 0; i < lines.length; i++) {
@@ -58,27 +58,27 @@ export function toggleCheckboxByHash(content: string, hash: string): string | nu
       const text = m[3].trim();
       const depth = Math.floor(m[1].length / 2);
       if (shortHash(text) === hash) {
-        targetIdx = i;
-        targetChecked = m[2] === "x" || m[2] === "X";
-        targetDepth = depth;
+        target_idx = i;
+        target_checked = m[2] === "x" || m[2] === "X";
+        target_depth = depth;
         break;
       }
     }
   }
-  if (targetIdx === -1) return null;
+  if (target_idx === -1) return null;
 
-  const newState = targetChecked ? " " : "x";
+  const newState = target_checked ? " " : "x";
 
   // 切换父级
-  lines[targetIdx] = lines[targetIdx].replace(/\[( |x|X)\]/, `[${newState}]`);
+  lines[target_idx] = lines[target_idx].replace(/\[( |x|X)\]/, `[${newState}]`);
 
   // 联动子级（缩进更大的行跟随父级状态）
-  for (let i = targetIdx + 1; i < lines.length; i++) {
+  for (let i = target_idx + 1; i < lines.length; i++) {
     const line = lines[i];
     const m = line.match(/^(\s*)[-*]\s\[( |x|X)\]\s(.+)$/);
     if (m) {
       const depth = Math.floor(m[1].length / 2);
-      if (depth > targetDepth) {
+      if (depth > target_depth) {
         lines[i] = line.replace(/\[( |x|X)\]/, `[${newState}]`);
       } else {
         break; // 回到同级或更高级，停止

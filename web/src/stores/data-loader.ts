@@ -1,6 +1,6 @@
 import {
-  readDir, readTextFile, tryGetDir, tryGetFile, listDirAll,
-  writeTextFile, createFile, removeEntry,
+  readDir, readTextFile, tryGetDir, tryGetFile,
+  writeTextFile, createFile,
 } from "../utils/fs";
 import { parseFrontmatter, parseCheckboxes } from "../utils/markdown";
 import type { ProjectData, KanbanData, ColumnData, CardData, EventRecord, ViewState } from "../types";

@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import {
-  readDir, readTextFile, tryGetDir, tryGetFile, listDirAll,
+  readTextFile, tryGetDir, tryGetFile, listDirAll,
   pickDirectory, writeTextFile, createFile, createDir, removeEntry,
 } from "../utils/fs";
 import { parseFrontmatter, buildFrontmatterDoc, toggleCheckboxByHash } from "../utils/markdown";
-import type { ProjectData, KanbanData, ColumnData, CardData, EventRecord, ViewState } from "../types";
+import type { ProjectData, CardData, EventRecord, ViewState } from "../types";
 import { loadProjectData, loadEventsFromDir, logWebEvent, shortHash, saveView, loadView } from "./data-loader";
 
 interface AppStore {
@@ -166,12 +166,12 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!projDir) return;
       const kanbanDir = await tryGetDir(projDir, kanban);
       if (!kanbanDir) return;
-      let trashDir = await tryGetDir(kanbanDir, ".trash");
-      if (!trashDir) trashDir = await createDir(kanbanDir, ".trash");
+      let trash_dir = await tryGetDir(kanbanDir, ".trash");
+      if (!trash_dir) trash_dir = await createDir(kanbanDir, ".trash");
       const ts = Date.now().toString(36);
       const oldName = parts[parts.length - 1];
       const newName = oldName.replace(/\.md$/, "") + "." + ts + ".md";
-      const file = await createFile(trashDir, newName);
+      const file = await createFile(trash_dir, newName);
       const srcFile = await tryGetFile(dir, parts[parts.length - 1]);
       if (!srcFile) return;
       const content = await readTextFile(srcFile);
@@ -196,18 +196,18 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!destDir) return;
       const parts = card.path.split("/");
       const fileName = parts[parts.length - 1];
-      let srcDir: FileSystemDirectoryHandle = rootHandle;
+      let src_dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
-        const next = await tryGetDir(srcDir, parts[i]);
+        const next = await tryGetDir(src_dir, parts[i]);
         if (!next) return;
-        srcDir = next;
+        src_dir = next;
       }
-      const file = await tryGetFile(srcDir, fileName);
+      const file = await tryGetFile(src_dir, fileName);
       if (!file) return;
       const content = await readTextFile(file);
       const destFile = await createFile(destDir, fileName);
       await writeTextFile(destFile, content);
-      await removeEntry(srcDir, fileName);
+      await removeEntry(src_dir, fileName);
       await logWebEvent(rootHandle, proj, "item_move", "移动卡片: " + card.name, { from: parts[parts.length - 2], to: destCol, file_path: [proj, kanban, destCol, fileName].join("/") });
       await get().loadAll();
     } catch (e: unknown) {
@@ -345,9 +345,9 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!projDir) return;
       const kanbanDir = await tryGetDir(projDir, kanban);
       if (!kanbanDir) return;
-      const trashDir = await tryGetDir(kanbanDir, ".trash");
-      if (!trashDir) { set({ trashItems: [] }); return; }
-      const entries = await listDirAll(trashDir);
+      const trash_dir = await tryGetDir(kanbanDir, ".trash");
+      if (!trash_dir) { set({ trashItems: [] }); return; }
+      const entries = await listDirAll(trash_dir);
       const items: Array<{ name: string; path: string; originalName: string }> = [];
       for (const e of entries) {
         if (!e.isDir && e.name.endsWith(".md") && e.name !== "readme.md") {
@@ -375,19 +375,19 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!kanbanDir) return;
       const colDir = await tryGetDir(kanbanDir, col);
       if (!colDir) return;
-      let trashDir: FileSystemDirectoryHandle = rootHandle;
+      let trash_dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
-        const next = await tryGetDir(trashDir, parts[i]);
+        const next = await tryGetDir(trash_dir, parts[i]);
         if (!next) return;
-        trashDir = next;
+        trash_dir = next;
       }
-      const file = await tryGetFile(trashDir, fileName);
+      const file = await tryGetFile(trash_dir, fileName);
       if (!file) return;
       const content = await readTextFile(file);
       const cleanName = fileName.replace(/.w+.md$/, ".md");
       const destFile = await createFile(colDir, cleanName);
       await writeTextFile(destFile, content);
-      await removeEntry(trashDir, fileName);
+      await removeEntry(trash_dir, fileName);
       await logWebEvent(rootHandle, proj, "item_create", "恢复卡片: " + cleanName);
       await get().loadTrash(proj, kanban);
       await get().loadAll();
