@@ -8,6 +8,7 @@ export interface HookContext {
   root_dir?: string;
   item_path?: string;
   item_name?: string;
+  source_column?: string;
   dest_column?: string;
   project_name?: string;
   kanban_name?: string;
