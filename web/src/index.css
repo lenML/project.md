@@ -23,6 +23,21 @@ body {
   background: #64748b;
 }
 
+/* CardDetail 精致滚动条 */
+.card-detail-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.card-detail-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.card-detail-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+.card-detail-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
 /* card hover — 悬停上浮 + 发光阴影 */
 .card-hover {
   @apply border border-slate-700/50 bg-slate-800/50 rounded-lg p-3 cursor-pointer

@@ -36,7 +36,7 @@ export default function CardDetail() {
       onClick={closeCard}
     >
       <div
-        className="w-full max-w-3xl max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col"
+        className="w-full max-w-5xl max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
@@ -72,7 +72,7 @@ export default function CardDetail() {
           </div>
         </div>
         {editing ? (
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 card-detail-scroll">
             <CardDetailEditor
               editName={editName}
               editDesc={editDesc}
@@ -87,7 +87,7 @@ export default function CardDetail() {
         ) : (
           <div className="flex-1 grid grid-cols-2 gap-4 p-6 min-h-0 overflow-hidden">
             {/* 左侧：元数据 + checklist + 事件 */}
-            <div className="overflow-y-auto space-y-4 pr-2">
+            <div className="overflow-y-auto space-y-4 pr-2 card-detail-scroll">
               {!!c.meta.id && (
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">
@@ -137,7 +137,7 @@ export default function CardDetail() {
               )}
             </div>
             {/* 右侧：正文 */}
-            <div className="overflow-y-auto pr-2">
+            <div className="overflow-y-auto pr-2 card-detail-scroll">
               {c.body.trim() && (
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
@@ -155,3 +155,5 @@ export default function CardDetail() {
     </div>
   );
 }
+
+
