@@ -12,20 +12,24 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "js-yaml": "^4.1.0",
+    "lucide-react": "^0.510.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "zustand": "^5.0.4",
-    "js-yaml": "^4.1.0",
-    "lucide-react": "^0.510.0"
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/mdast": "^4.0.4",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@types/js-yaml": "^4.0.9",
     "@vitejs/plugin-react": "^4.4.1",
-    "typescript": "~5.8.3",
-    "vite": "^6.3.2",
     "tailwindcss": "^4.1.4",
-    "@tailwindcss/vite": "^4.1.4"
+    "typescript": "~5.8.3",
+    "vite": "^6.3.2"
   }
 }
