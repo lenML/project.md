@@ -2,6 +2,8 @@ export interface CheckboxItem {
   text: string;
   checked: boolean;
   hash: string;
+  bracketOffset: number;
+  depth: number;
 }
 
 export interface CardData {

@@ -1,55 +1,10 @@
-import { useState } from 'react';
-import { useCardDetail } from '../hooks/useCardDetail';
-import { formatTime } from '../utils/format';
-import { X, CheckSquare2, Square, Edit3, Save, Trash2 } from 'lucide-react';
-import type { CardData, EventRecord } from '../types';
-
-function CheckboxRow({
-  cb,
-  writeMode,
-  onToggle,
-}: {
-  cb: CardData['checkboxes'][number];
-  writeMode: boolean;
-  onToggle: (hash: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <button
-        onClick={() => onToggle(cb.hash)}
-        className={
-          'shrink-0 transition-colors ' +
-          (writeMode ? 'cursor-pointer hover:opacity-80' : 'cursor-default')
-        }
-        title={writeMode ? '切换' : '只读模式'}
-        disabled={!writeMode}
-      >
-        {cb.checked ? (
-          <CheckSquare2 size={16} className="text-green-400" />
-        ) : (
-          <Square size={16} className="text-slate-500" />
-        )}
-      </button>
-      <span className={cb.checked ? 'text-slate-400 line-through' : 'text-slate-200'}>
-        {cb.text}
-      </span>
-      <span className="text-xs text-slate-600 font-mono">#{cb.hash}</span>
-    </div>
-  );
-}
-
-function CardEventRow({ e }: { e: EventRecord }) {
-  return (
-    <div
-      key={e.id}
-      className="flex items-center gap-3 text-xs text-slate-400 bg-slate-800/30 rounded px-2 py-1"
-    >
-      <span>{formatTime(e.timestamp)}</span>
-      <span className="text-slate-500 font-mono">{e.type}</span>
-      <span>{e.title}</span>
-    </div>
-  );
-}
+import { useState } from "react";
+import { useCardDetail } from "../hooks/useCardDetail";
+import { formatTime } from "../utils/format";
+import { X, Edit3, Trash2 } from "lucide-react";
+import CheckboxRow from "./card/CheckboxRow";
+import CardEventRow from "./card/CardEventRow";
+import CardDetailEditor from "./card/CardDetailEditor";
 
 export default function CardDetail() {
   const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, cardEvents } =
@@ -57,13 +12,13 @@ export default function CardDetail() {
   if (!card) return null;
   const c = card;
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editDesc, setEditDesc] = useState('');
-  const [editBody, setEditBody] = useState('');
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editBody, setEditBody] = useState("");
 
   function startEdit() {
     setEditName(String(c.meta.name || c.name));
-    setEditDesc(String(c.meta.desc || ''));
+    setEditDesc(String(c.meta.desc || ""));
     setEditBody(c.body);
     setEditing(true);
   }
@@ -118,56 +73,31 @@ export default function CardDetail() {
         </div>
         <div className="p-6 space-y-5">
           {editing ? (
-            <div className="space-y-3">
-              <input
-                className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-slate-100"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="名称"
-              />
-              <input
-                className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-slate-100"
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                placeholder="描述"
-              />
-              <textarea
-                className="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-slate-100 font-mono min-h-32"
-                value={editBody}
-                onChange={(e) => setEditBody(e.target.value)}
-                placeholder="正文 (markdown)"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={saveEdit}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Save size={16} />
-                  保存
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors"
-                >
-                  取消
-                </button>
-              </div>
-            </div>
+            <CardDetailEditor
+              editName={editName}
+              editDesc={editDesc}
+              editBody={editBody}
+              setName={setEditName}
+              setDesc={setEditDesc}
+              setBody={setEditBody}
+              onSave={saveEdit}
+              onCancel={() => setEditing(false)}
+            />
           ) : (
             <>
               {!!c.meta.id && (
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">
-                    #{String(c.meta.id ?? '')}
+                    #{String(c.meta.id ?? "")}
                   </span>
                   {!!c.meta.created_at && (
                     <span className="bg-slate-800 px-2 py-1 rounded">
-                      {formatTime(String(c.meta.created_at ?? ''))}
+                      {formatTime(String(c.meta.created_at ?? ""))}
                     </span>
                   )}
                   {!!c.meta.desc && (
                     <span className="bg-slate-800 px-2 py-1 rounded">
-                      {String(c.meta.desc ?? '')}
+                      {String(c.meta.desc ?? "")}
                     </span>
                   )}
                 </div>
@@ -176,7 +106,7 @@ export default function CardDetail() {
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                     Checklist (
-                    {c.checkboxes.filter((cbx) => cbx.checked).length + '/' + c.checkboxes.length})
+                    {c.checkboxes.filter((cbx) => cbx.checked).length + "/" + c.checkboxes.length})
                   </div>
                   <div className="space-y-1.5">
                     {c.checkboxes.map((cb) => (
@@ -195,7 +125,7 @@ export default function CardDetail() {
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                     内容
                   </div>
-                  <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans">
+                  <pre className="text-sm text-slate-300 whitespace-pre-wrap font-mono">
                     {c.body.trim()}
                   </pre>
                 </div>
