@@ -36,10 +36,10 @@ export default function CardDetail() {
       onClick={closeCard}
     >
       <div
-        className="w-full max-w-2xl max-h-[80vh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl"
+        className="w-full max-w-3xl max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
           <h2 className="text-lg font-semibold text-slate-100">{c.name}</h2>
           <div className="flex items-center gap-2">
             {writeMode && !editing && (
@@ -71,8 +71,8 @@ export default function CardDetail() {
             </button>
           </div>
         </div>
-        <div className="p-6 space-y-5">
-          {editing ? (
+        {editing ? (
+          <div className="flex-1 overflow-y-auto p-6">
             <CardDetailEditor
               editName={editName}
               editDesc={editDesc}
@@ -83,8 +83,11 @@ export default function CardDetail() {
               onSave={saveEdit}
               onCancel={() => setEditing(false)}
             />
-          ) : (
-            <>
+          </div>
+        ) : (
+          <div className="flex-1 grid grid-cols-2 gap-4 p-6 min-h-0 overflow-hidden">
+            {/* 左侧：元数据 + checklist + 事件 */}
+            <div className="overflow-y-auto space-y-4 pr-2">
               {!!c.meta.id && (
                 <div className="flex flex-wrap gap-2 text-xs text-slate-400 bg-slate-800/30 rounded-lg p-3">
                   <span className="bg-slate-800 px-2 py-1 rounded font-mono">
@@ -120,6 +123,21 @@ export default function CardDetail() {
                   </div>
                 </div>
               )}
+              {cardEvents.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                    相关操作 ({cardEvents.length})
+                  </div>
+                  <div className="space-y-1">
+                    {cardEvents.map((e) => (
+                      <CardEventRow key={e.id} e={e} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* 右侧：正文 */}
+            <div className="overflow-y-auto pr-2">
               {c.body.trim() && (
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
@@ -130,21 +148,9 @@ export default function CardDetail() {
                   </pre>
                 </div>
               )}
-            </>
-          )}
-          {cardEvents.length > 0 && !editing && (
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                相关操作 ({cardEvents.length})
-              </div>
-              <div className="space-y-1">
-                {cardEvents.map((e) => (
-                  <CardEventRow key={e.id} e={e} />
-                ))}
-              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
