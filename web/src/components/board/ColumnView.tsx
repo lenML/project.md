@@ -84,7 +84,9 @@ function CheckboxBadges({ checkboxes }: { checkboxes: CardData['checkboxes'] }) 
               (cb.checked ? 'bg-green-900/30 text-green-400' : 'bg-slate-700/50 text-slate-400')
             }
           >
-            <Tag size={10} />
+            <span>
+              <Tag size={10} />
+            </span>
             {cb.text}
           </span>
         );
