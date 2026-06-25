@@ -177,11 +177,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) { set({ saving: false }); return; }
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const colDir = await tryGetDir(kanbanDir, col);
-      if (!colDir) return;
+      if (!colDir) { set({ saving: false }); return; }
       const now = new Date().toISOString();
       const id = shortHash(name + now);
       const safeName = name.replace(/[\s<>:"/\\|?*]/g, '_');
@@ -215,9 +215,9 @@ export const useStore = create<AppStore>((set, get) => ({
         dir = next;
       }
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       let trash_dir = await tryGetDir(kanbanDir, '.trash');
       if (!trash_dir) trash_dir = await createDir(kanbanDir, '.trash');
       const ts = Date.now().toString(36);
@@ -244,9 +244,9 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const destDir = await tryGetDir(kanbanDir, destCol);
       if (!destDir) return;
       const parts = card.path.split('/');
@@ -258,7 +258,7 @@ export const useStore = create<AppStore>((set, get) => ({
         src_dir = next;
       }
       const file = await tryGetFile(src_dir, fileName);
-      if (!file) return;
+      if (!file) { set({ saving: false }); return; }
       const content = await readTextFile(file);
       const destFile = await createFile(destDir, fileName);
       await writeTextFile(destFile, content);
@@ -288,7 +288,7 @@ export const useStore = create<AppStore>((set, get) => ({
         dir = next;
       }
       const file = await tryGetFile(dir, parts[parts.length - 1]);
-      if (!file) return;
+      if (!file) { set({ saving: false }); return; }
       const content = buildFrontmatterDoc(meta, body);
       await writeTextFile(file, content);
       await logWebEvent(rootHandle, proj, 'item_update', '编辑卡片: ' + card.name);
@@ -312,7 +312,7 @@ export const useStore = create<AppStore>((set, get) => ({
         dir = next;
       }
       const file = await tryGetFile(dir, parts[parts.length - 1]);
-      if (!file) return;
+      if (!file) { set({ saving: false }); return; }
       const content = await readTextFile(file);
 
       // parse frontmatter + body, toggle in body
@@ -337,11 +337,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) { set({ saving: false }); return; }
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const colDir = await tryGetDir(kanbanDir, col);
-      if (!colDir) return;
+      if (!colDir) { set({ saving: false }); return; }
       const readme = await createFile(colDir, 'readme.md');
       await writeTextFile(readme, content);
       await logWebEvent(rootHandle, proj, 'column_update', '更新列 readme: ' + col);
@@ -357,7 +357,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const readme = await createFile(projDir, 'readme.md');
       await writeTextFile(readme, content);
       await logWebEvent(rootHandle, proj, 'project_update', '更新 readme: ' + proj);
@@ -372,11 +372,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const colDir = await tryGetDir(kanbanDir, col);
-      if (!colDir) return;
+      if (!colDir) { set({ saving: false }); return; }
       const entries = await listDirAll(colDir);
       const mdFiles = entries.filter(
         (e) => !e.isDir && e.name.endsWith('.md') && e.name !== 'readme.md',
@@ -415,9 +415,9 @@ export const useStore = create<AppStore>((set, get) => ({
     if (!rootHandle) return;
     try {
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const trash_dir = await tryGetDir(kanbanDir, '.trash');
       if (!trash_dir) {
         set({ trashItems: [] });
@@ -450,11 +450,11 @@ export const useStore = create<AppStore>((set, get) => ({
       const parts = trashPath.split('/');
       const fileName = parts[parts.length - 1];
       const projDir = await tryGetDir(rootHandle, proj);
-      if (!projDir) return;
+      if (!projDir) { set({ saving: false }); return; }
       const kanbanDir = await tryGetDir(projDir, kanban);
-      if (!kanbanDir) return;
+      if (!kanbanDir) { set({ saving: false }); return; }
       const colDir = await tryGetDir(kanbanDir, col);
-      if (!colDir) return;
+      if (!colDir) { set({ saving: false }); return; }
       let trash_dir: FileSystemDirectoryHandle = rootHandle;
       for (let i = 0; i < parts.length - 1; i++) {
         const next = await tryGetDir(trash_dir, parts[i]);
@@ -462,7 +462,7 @@ export const useStore = create<AppStore>((set, get) => ({
         trash_dir = next;
       }
       const file = await tryGetFile(trash_dir, fileName);
-      if (!file) return;
+      if (!file) { set({ saving: false }); return; }
       const content = await readTextFile(file);
       const cleanName = fileName.replace(/.w+.md$/, '.md');
       const destFile = await createFile(colDir, cleanName);
