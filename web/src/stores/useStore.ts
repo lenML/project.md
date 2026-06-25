@@ -174,7 +174,7 @@ export const useStore = create<AppStore>((set, get) => ({
   createCard: async (proj, kanban, col, name, desc) => {
     set({ saving: true });
     const { rootHandle } = get();
-    if (!rootHandle) return;
+    if (!rootHandle) { set({ saving: false }); return; }
     try {
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) return;
@@ -205,7 +205,7 @@ export const useStore = create<AppStore>((set, get) => ({
   deleteCard: async (proj, kanban, card) => {
     set({ saving: true });
     const { rootHandle } = get();
-    if (!rootHandle) return;
+    if (!rootHandle) { set({ saving: false }); return; }
     try {
       const parts = card.path.split('/');
       let dir: FileSystemDirectoryHandle = rootHandle;
@@ -278,7 +278,7 @@ export const useStore = create<AppStore>((set, get) => ({
   updateCard: async (proj, kanban, card, meta, body) => {
     set({ saving: true });
     const { rootHandle } = get();
-    if (!rootHandle) return;
+    if (!rootHandle) { set({ saving: false }); return; }
     try {
       const parts = card.path.split('/');
       let dir: FileSystemDirectoryHandle = rootHandle;
@@ -293,8 +293,9 @@ export const useStore = create<AppStore>((set, get) => ({
       await writeTextFile(file, content);
       await logWebEvent(rootHandle, proj, 'item_update', '编辑卡片: ' + card.name);
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
@@ -333,7 +334,7 @@ export const useStore = create<AppStore>((set, get) => ({
   updateColReadme: async (proj, kanban, col, content) => {
     set({ saving: true });
     const { rootHandle } = get();
-    if (!rootHandle) return;
+    if (!rootHandle) { set({ saving: false }); return; }
     try {
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) return;
@@ -345,8 +346,9 @@ export const useStore = create<AppStore>((set, get) => ({
       await writeTextFile(readme, content);
       await logWebEvent(rootHandle, proj, 'column_update', '更新列 readme: ' + col);
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
