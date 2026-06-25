@@ -53,7 +53,7 @@ export default function CardDetail() {
 
   return (
     <div
-      className={"fixed inset-0 z-50 flex items-start justify-center pt-12 " + (saving ? "bg-black/70 cursor-wait" : "bg-black/60")}
+      className="fixed inset-0 z-50 flex items-start justify-center pt-12 bg-black/60"
       onClick={handleClose}
     >
       <div
@@ -214,6 +214,9 @@ export default function CardDetail() {
     </div>
   );
 }
+
+
+
 
 
 
