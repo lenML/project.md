@@ -47,6 +47,11 @@ function CardItem({
         e.dataTransfer.effectAllowed = 'move';
       }}
     >
+      {saving && (
+        <div className="absolute inset-0 bg-slate-900/60 rounded-lg flex items-center justify-center z-10 cursor-wait">
+          <Loader2 size={18} className="animate-spin text-indigo-400" />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2">
         {writeMode && <span className="drag-handle text-xs mt-0.5">⠿</span>}
         <div className="text-sm font-medium text-slate-200 mb-1">{card.name}</div>
