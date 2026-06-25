@@ -11,6 +11,7 @@ export function useCardDetail() {
   const toggleCheckbox = useStore((s) => s.toggleCheckbox);
   const events = useStore((s) => s.events);
 
+  const saving = useStore((s) => s.saving);
   const cardEvents = useMemo(() => {
     if (!card) return [];
     return events.filter((e) => {
@@ -29,5 +30,9 @@ export function useCardDetail() {
     toggleCheckbox,
     events,
     cardEvents,
+    saving,
   };
 }
+
+
+

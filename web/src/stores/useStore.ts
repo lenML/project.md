@@ -28,6 +28,7 @@ interface AppStore {
   events: EventRecord[];
   view: ViewState;
   loading: boolean;
+  saving: boolean;
   writeMode: boolean;
   error: string | null;
   searchQuery: string;
@@ -88,6 +89,7 @@ export const useStore = create<AppStore>((set, get) => ({
   trashItems: [],
   view: { project: null, kanban: null, card: null, logOpen: false },
   loading: false,
+  saving: false,
   writeMode: false,
   error: null,
   searchQuery: '',
@@ -106,9 +108,10 @@ export const useStore = create<AppStore>((set, get) => ({
         view: { project: null, kanban: null, card: null, logOpen: false },
       });
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
       if ((e as DOMException).name === 'AbortError') return;
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
@@ -169,6 +172,7 @@ export const useStore = create<AppStore>((set, get) => ({
   toggleLog: () => set((s) => ({ view: { ...s.view, logOpen: !s.view.logOpen } })),
 
   createCard: async (proj, kanban, col, name, desc) => {
+    set({ saving: true });
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
@@ -192,12 +196,14 @@ export const useStore = create<AppStore>((set, get) => ({
         file_path: [proj, kanban, col, safeName + '.md'].join('/'),
       });
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
   deleteCard: async (proj, kanban, card) => {
+    set({ saving: true });
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
@@ -227,8 +233,9 @@ export const useStore = create<AppStore>((set, get) => ({
         file_path: [proj, kanban, '.trash', newName].join('/'),
       });
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
@@ -262,12 +269,14 @@ export const useStore = create<AppStore>((set, get) => ({
         file_path: [proj, kanban, destCol, fileName].join('/'),
       });
       await get().loadAll();
+      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      set({ error: e instanceof Error ? e.message : String(e), saving: false });
     }
   },
 
   updateCard: async (proj, kanban, card, meta, body) => {
+    set({ saving: true });
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {
@@ -322,6 +331,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   updateColReadme: async (proj, kanban, col, content) => {
+    set({ saving: true });
     const { rootHandle } = get();
     if (!rootHandle) return;
     try {

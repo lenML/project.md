@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useCardDetail } from "../hooks/useCardDetail";
 import { formatTime } from "../utils/format";
-import { X, Edit3, Trash2, ListChecks, FileText } from "lucide-react";
+import { X, Edit3, Trash2, ListChecks, FileText, Loader2 } from "lucide-react";
 import CheckboxRow from "./card/CheckboxRow";
 import CardEventRow from "./card/CardEventRow";
 import CardDetailEditor from "./card/CardDetailEditor";
 
 export default function CardDetail() {
-  const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, cardEvents } =
+  const { card, closeCard, view, writeMode, updateCard, deleteCard, toggleCheckbox, cardEvents, saving } =
     useCardDetail();
   if (!card) return null;
   const c = card;
@@ -67,17 +67,19 @@ export default function CardDetail() {
               <>
                 <button
                   onClick={startEdit}
-                  className="text-slate-400 hover:text-indigo-400 transition-colors"
+                  className={"text-slate-400 hover:text-indigo-400 transition-colors " + (saving ? "opacity-50" : "")}
                   title="编辑"
+                  disabled={saving}
                 >
-                  <Edit3 size={18} />
+                  {saving ? <Loader2 size={18} className="animate-spin" /> : <Edit3 size={18} />}
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="text-slate-400 hover:text-red-400 transition-colors"
+                  className={"text-slate-400 hover:text-red-400 transition-colors " + (saving ? "opacity-50" : "")}
                   title="删除"
+                  disabled={saving}
                 >
-                  <Trash2 size={18} />
+                  {saving ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                 </button>
               </>
             )}
@@ -100,9 +102,10 @@ export default function CardDetail() {
               setBody={setEditBody}
               onSave={saveEdit}
               onCancel={() => {
-                if (hasChanges && !window.confirm("有未保存的修改，确定取消？")) return;
+                if (hasChanges && !window.confirm('有未保存的修改，确定取消？')) return;
                 setEditing(false);
               }}
+              saving={saving}
             />
           </div>
         ) : (
@@ -211,3 +214,10 @@ export default function CardDetail() {
     </div>
   );
 }
+
+
+
+
+
+
+

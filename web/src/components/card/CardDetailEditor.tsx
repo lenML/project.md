@@ -1,4 +1,4 @@
-import { Save } from 'lucide-react';
+import { Save, Loader2 } from "lucide-react";
 
 export default function CardDetailEditor({
   editName,
@@ -9,6 +9,7 @@ export default function CardDetailEditor({
   setBody,
   onSave,
   onCancel,
+  saving,
 }: {
   editName: string;
   editDesc: string;
@@ -18,6 +19,7 @@ export default function CardDetailEditor({
   setBody: (v: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  saving?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -42,13 +44,20 @@ export default function CardDetailEditor({
       <div className="flex gap-2">
         <button
           onClick={onSave}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition-colors"
+          disabled={saving}
+          className={
+            "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors " +
+            (saving
+              ? "bg-indigo-500/50 text-indigo-200 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-500 text-white")
+          }
         >
-          <Save size={16} />
-          保存
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? "保存中..." : "保存"}
         </button>
         <button
           onClick={onCancel}
+          disabled={saving}
           className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-colors"
         >
           取消
