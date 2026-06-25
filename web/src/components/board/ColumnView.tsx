@@ -38,7 +38,7 @@ function CardItem({
   return (
     <div
       key={card.path}
-      className={'card-hover ' + (writeMode ? 'card-draggable' : '')}
+      className={'card-hover relative' + (writeMode ? ' card-draggable' : '') + (saving ? ' opacity-60' : '')}
       onClick={() => onCardClick(card)}
       draggable={writeMode && !saving}
       onDragStart={(e) => {
@@ -349,4 +349,5 @@ export default function ColumnView({
     </div>
   );
 }
+
 
