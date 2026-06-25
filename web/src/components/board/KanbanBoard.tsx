@@ -1,9 +1,9 @@
-import { useKanban } from '../../hooks/useKanbanStore';
-import type { CardData } from '../../types';
-import { Search, X, Trash2 } from 'lucide-react';
-import TrashPanel from '../trash/TrashPanel';
-import { useState } from 'react';
-import ColumnView from './ColumnView';
+import { useKanban } from "../../hooks/useKanbanStore";
+import type { CardData } from "../../types";
+import { Search, X, Trash2 } from "lucide-react";
+import TrashPanel from "../trash/TrashPanel";
+import { useState } from "react";
+import ColumnView from "./ColumnView";
 
 export default function KanbanBoard() {
   const {
@@ -31,37 +31,55 @@ export default function KanbanBoard() {
     setCardPages((prev) => ({ ...prev, [colName]: (prev[colName] || 1) + 1 }));
   }
 
+  const totalCardCount = kanban.columns.reduce((s, c) => s + c.cards.length, 0);
+  const visibleCardCount = displayedColumns.reduce((s, c) => s + c.cards.length, 0);
+  const hiddenCount = totalCardCount - visibleCardCount;
+
   return (
     <div className="flex flex-col h-full">
-      {writeMode && (
-        <div className="relative mb-3">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
-            placeholder="搜索卡片..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <input
+          className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-8 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-colors"
+          placeholder="搜索卡片..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <>
             <button
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery("")}
             >
               <X size={14} />
             </button>
+            {hiddenCount > 0 && (
+              <div className="absolute -bottom-5 left-3 text-xs text-slate-500">
+                已隐藏 {hiddenCount} 张卡片
+              </div>
+            )}
+          </>
+        )}
+        <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-slate-500 mr-1">
+          {searchQuery && (
+            <span>
+              {visibleCardCount}/{totalCardCount}
+            </span>
           )}
-          <button
-            onClick={() => {
-              loadTrash(view.project!, view.kanban!);
-              setShowTrash(true);
-            }}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors shrink-0"
-            title="回收站"
-          >
-            <Trash2 size={14} />
-          </button>
+          {writeMode && (
+            <button
+              onClick={() => {
+                loadTrash(view.project!, view.kanban!);
+                setShowTrash(true);
+              }}
+              className="flex items-center gap-1 text-slate-500 hover:text-red-400 transition-colors shrink-0 ml-2"
+              title="回收站"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
-      )}
+      </div>
       <div className="flex gap-4 flex-1 kanban-scroll overflow-x-auto pb-4">
         {displayedColumns.map((col) => (
           <ColumnView
@@ -76,8 +94,8 @@ export default function KanbanBoard() {
             onDragLeave={() => setDragOverCol(null)}
             isDragOver={dragOverCol === col.name}
             writeMode={writeMode}
-            projectName={view.project || ''}
-            kanbanName={view.kanban || ''}
+            projectName={view.project || ""}
+            kanbanName={view.kanban || ""}
             cardPage={cardPages[col.name] || 1}
             pageSize={CARD_PAGE_SIZE}
             onLoadMore={() => loadMoreCards(col.name)}

@@ -52,7 +52,7 @@ function CardItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              deleteCard(projectName, kanbanName, card);
+              if (!window.confirm('确认移入回收站「' + card.name + '」？')) return; deleteCard(projectName, kanbanName, card);
             }}
             className="text-slate-600 hover:text-red-400 transition-colors shrink-0"
             title="移入回收站"
@@ -339,3 +339,4 @@ export default function ColumnView({
     </div>
   );
 }
+

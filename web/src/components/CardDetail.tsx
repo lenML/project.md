@@ -31,13 +31,30 @@ export default function CardDetail() {
   }
 
   const hasCheckboxes = c.checkboxes.length > 0;
+  const hasChanges = editing && (
+    editName !== String(c.meta.name || c.name) ||
+    editDesc !== String(c.meta.desc || "") ||
+    editBody !== c.body
+  );
   const [showChecklist, setShowChecklist] = useState(true);
   const tab = hasCheckboxes && showChecklist ? "checklist" : "content";
+
+  function handleClose() {
+    if (hasChanges && !window.confirm("有未保存的修改，确定关闭？")) return;
+    closeCard();
+  }
+
+  function handleDelete() {
+    if (!view.project || !view.kanban) return;
+    if (!window.confirm("确认删除「" + c.name + "」？")) return;
+    deleteCard(view.project, view.kanban, c);
+    closeCard();
+  }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-12 bg-black/60"
-      onClick={closeCard}
+      onClick={handleClose}
     >
       <div
         className="w-full max-w-3xl max-h-[80vh] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl flex flex-col"
@@ -56,10 +73,7 @@ export default function CardDetail() {
                   <Edit3 size={18} />
                 </button>
                 <button
-                  onClick={() => {
-                    if (view.project && view.kanban) deleteCard(view.project, view.kanban, c);
-                    closeCard();
-                  }}
+                  onClick={handleDelete}
                   className="text-slate-400 hover:text-red-400 transition-colors"
                   title="删除"
                 >
@@ -68,7 +82,7 @@ export default function CardDetail() {
               </>
             )}
             <button
-              onClick={closeCard}
+              onClick={handleClose}
               className="text-slate-400 hover:text-slate-100 transition-colors"
             >
               <X size={20} />
@@ -85,7 +99,10 @@ export default function CardDetail() {
               setDesc={setEditDesc}
               setBody={setEditBody}
               onSave={saveEdit}
-              onCancel={() => setEditing(false)}
+              onCancel={() => {
+                if (hasChanges && !window.confirm("有未保存的修改，确定取消？")) return;
+                setEditing(false);
+              }}
             />
           </div>
         ) : (
