@@ -196,9 +196,10 @@ export const useStore = create<AppStore>((set, get) => ({
         file_path: [proj, kanban, col, safeName + '.md'].join('/'),
       });
       await get().loadAll();
-      set({ saving: false });
     } catch (e: unknown) {
-      set({ error: e instanceof Error ? e.message : String(e), saving: false });
+      set({ error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ saving: false });
     }
   },
 
@@ -240,8 +241,9 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   moveCard: async (proj, kanban, card, destCol) => {
+    set({ saving: true });
     const { rootHandle } = get();
-    if (!rootHandle) return;
+    if (!rootHandle) { set({ saving: false }); return; }
     try {
       const projDir = await tryGetDir(rootHandle, proj);
       if (!projDir) { set({ saving: false }); return; }

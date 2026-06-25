@@ -1,7 +1,7 @@
 import type { CardData } from '../../types';
 import { useColumnLogic } from '../../hooks/useColumnView';
 import { useStore } from '../../stores/useStore';
-import { CheckSquare2, Square, Plus } from 'lucide-react';
+import { CheckSquare2, Square, Plus, Loader2 } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { parseFrontmatter } from '../../utils/markdown';
 
@@ -34,13 +34,15 @@ function CardItem({
   kanbanName: string;
 }) {
   const deleteCard = useStore((s) => s.deleteCard);
+  const saving = useStore((s) => s.saving);
   return (
     <div
       key={card.path}
       className={'card-hover ' + (writeMode ? 'card-draggable' : '')}
       onClick={() => onCardClick(card)}
-      draggable={writeMode}
+      draggable={writeMode && !saving}
       onDragStart={(e) => {
+        if (saving) return;
         sessionStorage.setItem('drag-card', JSON.stringify(card));
         e.dataTransfer.effectAllowed = 'move';
       }}
@@ -52,12 +54,15 @@ function CardItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (!window.confirm('确认移入回收站「' + card.name + '」？')) return; deleteCard(projectName, kanbanName, card);
+              if (saving) return;
+              if (!window.confirm('确认移入回收站「' + card.name + '」？')) return;
+              deleteCard(projectName, kanbanName, card);
             }}
-            className="text-slate-600 hover:text-red-400 transition-colors shrink-0"
+            className={"shrink-0 transition-colors " + (saving ? "text-slate-700" : "text-slate-600 hover:text-red-400")}
             title="移入回收站"
+            disabled={saving}
           >
-            X
+            {saving ? <Loader2 size={12} className="animate-spin" /> : "X"}
           </button>
         )}
       </div>
