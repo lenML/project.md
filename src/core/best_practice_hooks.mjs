@@ -4,18 +4,18 @@ import { readFileSync } from "node:fs";
 const COLS = ["idea", "backlog", "todo", "doing", "done"];
 
 // 允许的移动规则: src_col -> [dest_cols]
-// todo => doing => done 严格单向，不能跳列/回退
+// 主流程 idea→backlog→todo→doing→done，允许后移
 const ALLOWED_MOVES = {
   idea:     ["backlog", "todo", "doing"],
-  backlog:  ["todo", "doing"],
-  todo:     ["doing"],
-  doing:    ["done"],
+  backlog:  ["idea", "todo", "doing"],
+  todo:     ["idea", "backlog", "doing"],
+  doing:    ["idea", "backlog", "todo", "done"],
   done:     [],
 };
 
 /**
  * 卡片移动到目标列之前。
- * - 规则: 按 todo→doing→done 严格单向，不能跳列或回退
+ * - 允许在主流程上前移或后移
  * - todo/doing/done 列必须含 checkbox
  * - done 列所有 checkbox 必须完成
  */
@@ -24,8 +24,8 @@ export function before_item_move(ctx) {
   if (allowed && !allowed.includes(ctx.dest_column)) {
     const msg = ctx.source_column === ctx.dest_column
       ? "卡片已在 " + ctx.dest_column + " 列"
-      : "不允许从 " + ctx.source_column + " 移动到 " + ctx.dest_column + "。仅允许: "
-        + "idea→backlog/todo/doing, backlog→todo/doing, todo→doing, doing→done";
+      : "不允许从 " + ctx.source_column + " 移动到 " + ctx.dest_column
+        + "。主流程: idea→backlog→todo→doing→done，允许后移";
     return { ok: false, message: msg };
   }
 
