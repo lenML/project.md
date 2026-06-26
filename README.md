@@ -66,7 +66,7 @@ pmd <命令> [选项]
 看板管理:
   kanban ls                       列出看板（使用 -p/--project）
   kanban init <name>              创建看板（使用 -p/--project，--bp）
-  kanban show                    看板概览（使用 -p -k，--all 显示全部，默认限 10 条）
+  kanban show                    看板概览（使用 -p -k，--all 显示全部，默认限 10 条+时间戳+列 readme 摘录）
   kanban cols                     列出看板下的列（使用 -p/--project -k/--kanban）
   kanban rm <name>                删除看板（使用 -p/--project）
 
@@ -79,7 +79,7 @@ pmd <命令> [选项]
   item ls                         列出卡片（使用 -p -k -c，--limit N 限条数）
   item new <name> [-d desc]       创建卡片（使用 -p -k -c）
   item show <id>                  查看卡片详情（支持 8 位 hex ID）
-  item mv <id>                    移动卡片（使用 -c 指定目标列）
+  item import <file>              从 markdown 文件导入卡片（自动合并 frontmatter）\n  item mv <id>                    移动卡片（使用 -c 指定目标列）
   item rm <id>                    移入回收站（支持 ID）
 
   item trash ls                   列出回收站（使用 -p -k）
@@ -198,7 +198,9 @@ pnpm build        # → web/dist/
 - `before_item_delete`, `after_item_delete`
 - `before_checkbox_toggle`, `after_checkbox_toggle`
 
-返回 `{ ok: false, message: "..." }` 阻止操作。最佳实践模板包含 done 列自动 checkbox 校验。
+返回 `{ ok: false, message: "..." }` 阻止操作。
+
+最佳实践模板规则：允许前移和后移（doing→todo 回退细化），todo/doing/done 列要求卡片必须有 checkbox，done 列要求所有 checkbox 已完成，done 不可移出。
 
 ## Development
 
@@ -222,7 +224,7 @@ src/
     checkbox.ts, checklist.ts
     hooks.ts, event_log.ts, template.ts, trash.ts
   utils/                  工具
-    fs.ts, hash.ts, lock.ts, markdown.ts
+    core/best_practice_hooks.mjs  最佳实践默认钩子\n    fs.ts, hash.ts, lock.ts, markdown.ts
 web/                      React 前端（单独构建）
 tests/                    Vitest 测试
 docs/                     设计文档 / 开发规范
@@ -232,3 +234,5 @@ skill/SKILL.md            CLI 使用技能文档（面向 AI agent）
 ## License
 
 MIT
+
+
